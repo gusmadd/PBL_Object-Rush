@@ -19,7 +19,7 @@ MonoBehaviour:
     width: 1440
     height: 810
   m_ShowMode: 4
-  m_Title: Project
+  m_Title: Inspector
   m_RootView: {fileID: 6}
   m_MinSize: {x: 875, y: 300}
   m_MaxSize: {x: 10000, y: 10000}
@@ -48,7 +48,7 @@ MonoBehaviour:
   m_MinSize: {x: 300, y: 112}
   m_MaxSize: {x: 24288, y: 16192}
   vertical: 0
-  controlID: 93
+  controlID: 37
   draggingID: 0
 --- !u!114 &3
 MonoBehaviour:
@@ -580,7 +580,7 @@ MonoBehaviour:
     m_SkipHidden: 0
     m_SearchArea: 1
     m_Folders:
-    - Assets/drop_item
+    - Assets/mc
     m_Globs: []
     m_ProductIds: 
     m_AnyWithAssetOrigin: 0
@@ -590,26 +590,25 @@ MonoBehaviour:
   m_ViewMode: 1
   m_StartGridSize: 64
   m_LastFolders:
-  - Assets/drop_item
+  - Assets/mc
   m_LastFoldersGridSize: -1
   m_LastProjectPath: C:\Users\Asus\OneDrive\Documents\PBL_Object-Rush
   m_LockTracker:
     m_IsLocked: 0
   m_LastLocalAssetsSearchArea: 1
   m_FolderTreeState:
-    scrollPos: {x: 0, y: 79}
+    scrollPos: {x: 0, y: 0}
     m_SelectedIDs:
-    - m_Data: 21056
+    - m_Data: 21070
     m_LastClickedID:
-      m_Data: 21056
+      m_Data: 21070
     m_ExpandedIDs:
     - m_Data: 0
     - m_Data: 20962
     - m_Data: 20964
-    - m_Data: 21046
-    - m_Data: 21050
+    - m_Data: 20966
+    - m_Data: 20968
     - m_Data: 1000000000
-    - m_Data: 2147483647
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -645,6 +644,8 @@ MonoBehaviour:
     - m_Data: 0
     - m_Data: 20962
     - m_Data: 20964
+    - m_Data: 20966
+    - m_Data: 20968
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -673,10 +674,10 @@ MonoBehaviour:
       m_ResourceFile: 
   m_ListAreaState:
     m_SelectedInstanceIDs:
-    - m_Data: 20836
+    - m_Data: 21224
     m_LastClickedEntityId:
-      m_Data: 20836
-    m_HadKeyboardFocusLastEvent: 0
+      m_Data: 21224
+    m_HadKeyboardFocusLastEvent: 1
     m_ExpandedInstanceIDs: []
     m_RenameOverlay:
       m_UserAcceptedRename: 0
@@ -802,7 +803,7 @@ MonoBehaviour:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
       m_SelectedIDs:
-      - m_Data: 20836
+      - m_Data: 21224
       m_LastClickedID:
         m_Data: 0
       m_ExpandedIDs:

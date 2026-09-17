@@ -1,22 +1,22 @@
 [Licensing::Module] Trying to connect to existing licensing client channel...
 Built from '6000.4/staging' branch; Version is '6000.4.1f1 (336a400b9ea2) revision 3369536'; Using compiler version '194234433'; Build Type 'Release'
 OS: 'Windows 11  (10.0.26200) CoreSingleLanguage' Language: 'en' Physical Memory: 15773 MB
-[Licensing::IpcConnector] Successfully connected to: "LicenseClient-Asus" at "2026-09-16T09:13:59.9150205Z"
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-Asus" at "2026-09-16T09:25:40.6238928Z"
 BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
 System  architecture: x64
 Process architecture: x64
-Date: 2026-09-16T09:13:59Z
+Date: 2026-09-16T09:25:40Z
 [Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 24420, path: "C:/Program Files/Unity Hub/UnityLicensingClient_V1/Unity.Licensing.Client.exe")
 [Licensing::Module] LicensingClient has failed validation; ignoring
 [Licensing::Client] Handshaking with LicensingClient:
   Version:                 1.18.3+d7ffd15
-  Session Id:              b500cd2413c84bdab5fa7cf5b3d601bc
+  Session Id:              338d1492bcba4aaea06a761ab0ad3138
   Correlation Id:          a1f433608cc89ddb1220db7463f674fd
-  External correlation Id: 7135287698640164330
+  External correlation Id: 6367516151990921963
   Machine Id:              q/mimxk6M+L5Oz6GHhxFa9fOdAQ=
-[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-Asus" (connect: 0.00s, validation: 0.00s, handshake: 0.06s)
-[Licensing::IpcConnector] Successfully connected to: "LicenseClient-Asus-notifications" at "2026-09-16T09:13:59.9766091Z"
-[Licensing::Module] Licensing Background thread has ended after 0.06s
+[Licensing::Module] Successfully connected to LicensingClient on channel: "LicenseClient-Asus" (connect: 0.00s, validation: 0.00s, handshake: 0.05s)
+[Licensing::IpcConnector] Successfully connected to: "LicenseClient-Asus-notifications" at "2026-09-16T09:25:40.6710179Z"
+[Licensing::Module] Licensing Background thread has ended after 0.05s
 
 COMMAND LINE ARGUMENTS:
 C:\Program Files\Unity\Hub\Editor\6000.4.1f1\Editor\Unity.exe
@@ -30,7 +30,7 @@ C:/Users/Asus/OneDrive/Documents/PBL_Object-Rush
 -logFile
 Logs/AssetImportWorker1.log
 -srvPort
-57129
+64567
 -licensingIpc
 LicenseClient-Asus
 -force-d3d12
@@ -79,18 +79,18 @@ C:/Users/Asus/OneDrive/Documents/PBL_Object-Rush
     "memorysetup-job-temp-allocator-block-size=2097152"
     "memorysetup-job-temp-allocator-block-size-background=1048576"
     "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
-Player connection [21848]  Target information:
+Player connection [5984]  Target information:
 
-Player connection [21848]  * "[IP] 192.168.10.1 [Port] 0 [Flags] 2 [Guid] 1814385658 [EditorId] 1814385658 [Version] 1048832 [Id] WindowsEditor(7,Zevoraa) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+Player connection [5984]  * "[IP] 192.168.10.1 [Port] 0 [Flags] 2 [Guid] 392770929 [EditorId] 392770929 [Version] 1048832 [Id] WindowsEditor(7,Zevoraa) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
 
-Player connection [21848]  * "[IP] 192.168.43.1 [Port] 0 [Flags] 2 [Guid] 1814385658 [EditorId] 1814385658 [Version] 1048832 [Id] WindowsEditor(7,Zevoraa) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+Player connection [5984]  * "[IP] 192.168.43.1 [Port] 0 [Flags] 2 [Guid] 392770929 [EditorId] 392770929 [Version] 1048832 [Id] WindowsEditor(7,Zevoraa) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
 
-Player connection [21848]  * "[IP] 192.168.1.10 [Port] 0 [Flags] 2 [Guid] 1814385658 [EditorId] 1814385658 [Version] 1048832 [Id] WindowsEditor(7,Zevoraa) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+Player connection [5984]  * "[IP] 192.168.1.10 [Port] 0 [Flags] 2 [Guid] 392770929 [EditorId] 392770929 [Version] 1048832 [Id] WindowsEditor(7,Zevoraa) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
 
-Player connection [21848]  * "[IP] 192.168.137.1 [Port] 0 [Flags] 2 [Guid] 1814385658 [EditorId] 1814385658 [Version] 1048832 [Id] WindowsEditor(7,Zevoraa) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
+Player connection [5984]  * "[IP] 192.168.137.1 [Port] 0 [Flags] 2 [Guid] 392770929 [EditorId] 392770929 [Version] 1048832 [Id] WindowsEditor(7,Zevoraa) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor" 
 
-Player connection [21848] Host joined multi-casting on [225.0.0.222:54997]...
-Player connection [21848] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Player connection [5984] Host joined multi-casting on [225.0.0.222:54997]...
+Player connection [5984] Host joined alternative multi-casting on [225.0.0.222:34997]...
 JobSystem: Creating JobQueue using job-worker-count value 7
 Input System module state changed to: Initialized.
 [Physics::Module] Initialized fallback backend.
@@ -120,12 +120,12 @@ Initialize mono
 Mono path[0] = 'C:/Program Files/Unity/Hub/Editor/6000.4.1f1/Editor/Data/Managed'
 Mono path[1] = 'C:/Program Files/Unity/Hub/Editor/6000.4.1f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
 Mono config path = 'C:/Program Files/Unity/Hub/Editor/6000.4.1f1/Editor/Data/MonoBleedingEdge/etc'
-Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56228
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56484
 CodeReloadManager initialized
 Begin MonoManager ReloadAssembly
 Registering precompiled unity dll's ...
 Register platform support module: C:/Program Files/Unity/Hub/Editor/6000.4.1f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
-Registered in 0.002911 seconds.
+Registered in 0.003762 seconds.
 Native extension for WindowsStandalone target not found
 Package Manager log level set to [2]
 [Package Manager] Failed to launch server process. Reason: Unity was launched with the -noUpm command-line argument
@@ -133,23 +133,23 @@ Package Manager log level set to [2]
 [Package Manager] Cannot connect to Unity Package Manager local server
 ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
 Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  0.626 seconds
-Domain Reload Profiling: 1376ms
-	BeginReloadAssembly (231ms)
-	RebuildCommonClasses (64ms)
-	RebuildNativeTypeToScriptingClass (19ms)
-	initialDomainReloadingComplete (113ms)
-	LoadAllAssembliesAndSetupDomain (321ms)
-		LoadAssemblies (223ms)
-		AnalyzeDomain (305ms)
-			TypeCache.Refresh (303ms)
-				TypeCache.ScanAssembly (277ms)
-	FinalizeReload (628ms)
+- Finished resetting the current domain, in  0.589 seconds
+Domain Reload Profiling: 1355ms
+	BeginReloadAssembly (223ms)
+	RebuildCommonClasses (75ms)
+	RebuildNativeTypeToScriptingClass (20ms)
+	initialDomainReloadingComplete (120ms)
+	LoadAllAssembliesAndSetupDomain (326ms)
+		LoadAssemblies (218ms)
+		AnalyzeDomain (312ms)
+			TypeCache.Refresh (309ms)
+				TypeCache.ScanAssembly (284ms)
+	FinalizeReload (591ms)
 		SetupLoadedEditorAssemblies (0ms)
-			InitializePlatformSupportModulesInManaged (72ms)
-			BeforeProcessingInitializeOnLoad (146ms)
-			ProcessInitializeOnLoadAttributes (176ms)
-			ProcessInitializeOnLoadMethodAttributes (129ms)
+			InitializePlatformSupportModulesInManaged (79ms)
+			BeforeProcessingInitializeOnLoad (133ms)
+			ProcessInitializeOnLoadAttributes (167ms)
+			ProcessInitializeOnLoadMethodAttributes (120ms)
 ========================================================================
 Worker process is ready to serve import requests
 Import Worker Mode flag is 0x00
@@ -172,38 +172,30 @@ Native extension for WindowsStandalone target not found
 [Package Manager] Cannot connect to Unity Package Manager local server
 ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
 Mono: successfully reloaded assembly
-- Finished resetting the current domain, in  0.596 seconds
-Domain Reload Profiling: 1157ms
-	BeginReloadAssembly (352ms)
-		DisableScriptedObjects (9ms)
-		CreateAndSetChildDomain (65ms)
-	RebuildCommonClasses (86ms)
-	RebuildNativeTypeToScriptingClass (18ms)
-	initialDomainReloadingComplete (72ms)
-	LoadAllAssembliesAndSetupDomain (31ms)
-		LoadAssemblies (209ms)
-		AnalyzeDomain (16ms)
-			TypeCache.Refresh (11ms)
+- Finished resetting the current domain, in  0.494 seconds
+Domain Reload Profiling: 912ms
+	BeginReloadAssembly (266ms)
+		DisableScriptedObjects (8ms)
+		CreateAndSetChildDomain (50ms)
+	RebuildCommonClasses (56ms)
+	RebuildNativeTypeToScriptingClass (15ms)
+	initialDomainReloadingComplete (54ms)
+	LoadAllAssembliesAndSetupDomain (24ms)
+		LoadAssemblies (147ms)
+		AnalyzeDomain (13ms)
+			TypeCache.Refresh (9ms)
 				TypeCache.ScanAssembly (3ms)
-	FinalizeReload (598ms)
+	FinalizeReload (496ms)
 		SetupLoadedEditorAssemblies (0ms)
 			InitializePlatformSupportModulesInManaged (3ms)
-			BeforeProcessingInitializeOnLoad (154ms)
-			ProcessInitializeOnLoadAttributes (151ms)
-			ProcessInitializeOnLoadMethodAttributes (72ms)
-			AfterProcessingInitializeOnLoad (11ms)
-		AwakeInstancesAfterBackupRestoration (11ms)
-Launched and connected shader compiler UnityShaderCompiler.exe after 0.02 seconds
+			BeforeProcessingInitializeOnLoad (133ms)
+			ProcessInitializeOnLoadAttributes (125ms)
+			ProcessInitializeOnLoadMethodAttributes (63ms)
+			AfterProcessingInitializeOnLoad (9ms)
+		AwakeInstancesAfterBackupRestoration (9ms)
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.01 seconds
 Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
-Unloading 64 unused Assets / (30.0 KB). Loaded Objects now: 663.
-Memory consumption went from 65.3 MB to 65.3 MB.
-Total: 7.751700 ms (FindLiveObjects: 0.104800 ms CreateObjectMapping: 0.020600 ms MarkObjects: 7.410900 ms  DeleteObjects: 0.211400 ms)
-
-========================================================================
-Received Import Request.
-  Time since last request: 67849.640985 seconds.
-  path: Packages/com.unity.multiplayer.center/Editor/Unity.Multiplayer.Center.Editor.asmdef
-  importAddress: Guid(be17709716f1648caa5de6d0c38103ed) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
-Start importing Packages/com.unity.multiplayer.center/Editor/Unity.Multiplayer.Center.Editor.asmdef using Guid(be17709716f1648caa5de6d0c38103ed) Importer(815301076,1909f56bfc062723c751e8b465ee728b) (PreviewImporter) -> (Import Result ID: '10f5ad739f7e38a0e0a4e2dff99abf74') in 0.0075608 seconds [static and dynamic dependencies]. Details - ImportResultOutputID=e0cde85a8f012d55d771661ce84e1989 DependenciesID=fdabda30911a7fadaac20053c03f9091 StaticDependenciesID=8c11ef133dd46c0794ef7d1eccab50f1 
-Number of updated asset objects reloaded before import = 0Number of asset objects unloaded after import = 0
+Unloading 64 unused Assets / (30.0 KB). Loaded Objects now: 665.
+Memory consumption went from 65.9 MB to 65.9 MB.
+Total: 3.964800 ms (FindLiveObjects: 0.046800 ms CreateObjectMapping: 0.007000 ms MarkObjects: 3.817400 ms  DeleteObjects: 0.091900 ms)
 
