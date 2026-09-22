@@ -12,6 +12,8 @@ public class PlayerMovement : NetworkBehaviour
     [Header("Jump Settings")]
     [SerializeField] private float jumpForce = 5f;
     [SerializeField] private float groundCheckDistance = 0.2f;
+    [SerializeField] private float jumpBufferTime = 0.15f;
+    [SerializeField] private float coyoteTime = 0.1f;
     [SerializeField] private LayerMask groundLayer;
 
     private Rigidbody rb;
@@ -19,7 +21,8 @@ public class PlayerMovement : NetworkBehaviour
     private CapsuleCollider capsuleCollider;
     private bool isGrounded;
     private Vector3 moveInput;
-    private bool jumpRequested;
+    private float jumpBufferCounter;
+    private float coyoteCounter;
 
     private void Awake()
     {
@@ -56,7 +59,11 @@ public class PlayerMovement : NetworkBehaviour
         if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) vertical -= 1f;
 
         moveInput = new Vector3(horizontal, 0f, vertical).normalized;
-        jumpRequested = Keyboard.current.spaceKey.wasPressedThisFrame && isGrounded;
+
+        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        {
+            jumpBufferCounter = jumpBufferTime;
+        }
     }
 
     private void FixedUpdate()
@@ -65,6 +72,18 @@ public class PlayerMovement : NetworkBehaviour
             return;
 
         CheckGrounded();
+
+        if (isGrounded)
+        {
+            coyoteCounter = coyoteTime;
+        }
+        else
+        {
+            coyoteCounter -= Time.fixedDeltaTime;
+        }
+
+        jumpBufferCounter -= Time.fixedDeltaTime;
+
         HandleMovementInput();
         HandleJumpInput();
     }
@@ -107,11 +126,13 @@ public class PlayerMovement : NetworkBehaviour
 
     private void HandleJumpInput()
     {
-        if (!jumpRequested || !isGrounded)
+        if (jumpBufferCounter <= 0f || coyoteCounter <= 0f)
             return;
 
         rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
-        jumpRequested = false;
+
+        jumpBufferCounter = 0f;
+        coyoteCounter = 0f;
     }
 }
