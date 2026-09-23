@@ -10,27 +10,27 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: -8679921383154817045, guid: 6946cde190d9cf6468844dfb17a063f2, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.5
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6946cde190d9cf6468844dfb17a063f2, type: 3}
       propertyPath: m_LocalScale.y
-      value: 0.5
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6946cde190d9cf6468844dfb17a063f2, type: 3}
       propertyPath: m_LocalScale.z
-      value: 0.5
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6946cde190d9cf6468844dfb17a063f2, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 50
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6946cde190d9cf6468844dfb17a063f2, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 7.57
+      value: 8.779174
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6946cde190d9cf6468844dfb17a063f2, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: -21.505857
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 6946cde190d9cf6468844dfb17a063f2, type: 3}
       propertyPath: m_LocalRotation.w
@@ -196,7 +196,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 4178891530
+  GlobalObjectIdHash: 2266251325
   InScenePlacedSourceGlobalObjectIdHash: 2010172450
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -347,6 +347,8 @@ MonoBehaviour:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: 0
+  throwForceForward: 8
+  throwForceUp: 3
 --- !u!1 &4767598333800059767 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -516098083770646512, guid: 6946cde190d9cf6468844dfb17a063f2, type: 3}

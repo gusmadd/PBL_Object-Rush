@@ -407,7 +407,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2621224683
+  GlobalObjectIdHash: 2126982395
   InScenePlacedSourceGlobalObjectIdHash: 2621224683
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -912,6 +912,8 @@ PrefabInstance:
     m_RemovedGameObjects:
     - {fileID: 65702495048144492, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
     - {fileID: -8700617353114198275, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+    - {fileID: -4714817154256824709, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+    - {fileID: 8821623529969584324, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
