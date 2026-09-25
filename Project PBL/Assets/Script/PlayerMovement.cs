@@ -23,6 +23,8 @@ public class PlayerMovement : NetworkBehaviour
     private Vector3 moveInput;
     private float jumpBufferCounter;
     private float coyoteCounter;
+    public bool IsGrounded => isGrounded;
+    public bool IsSledding { get; set; } = false;
 
     private void Awake()
     {
@@ -83,6 +85,8 @@ public class PlayerMovement : NetworkBehaviour
         }
 
         jumpBufferCounter -= Time.fixedDeltaTime;
+
+        if (IsSledding) return;
 
         HandleMovementInput();
         HandleJumpInput();

@@ -8,6 +8,7 @@ public class ObjectiveItem : NetworkBehaviour
     [Header("Network States")]
     public NetworkVariable<bool> IsCarried = new NetworkVariable<bool>(false);
     public NetworkVariable<ulong> CarrierClientId = new NetworkVariable<ulong>(999);
+    public NetworkVariable<bool> CanBePickedUp = new NetworkVariable<bool>(true);
 
     [Header("Throw Settings")]
     [SerializeField] private float throwForceForward = 8f;
@@ -17,6 +18,8 @@ public class ObjectiveItem : NetworkBehaviour
     private Collider col;
     private NetworkObject netObj;
     private Transform currentCarrierPoint;
+    private bool waitingForLanding;
+    private float droppedAt;
 
     private void Awake()
     {
@@ -26,7 +29,7 @@ public class ObjectiveItem : NetworkBehaviour
         netObj = GetComponent<NetworkObject>();
     }
 
-    private void Update()
+    private void LateUpdate()
     {
         // Secara visual, kunci posisi item ke CarryPoint pembawa di semua client
         if (IsCarried.Value && currentCarrierPoint != null)
@@ -41,39 +44,67 @@ public class ObjectiveItem : NetworkBehaviour
     public void PickUp(ulong clientId, Transform playerCarryPoint)
     {
         if (!IsServer) return;
+        if (!CanBePickedUp.Value) return;
+
+        NetworkObject playerObject = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
+        if (playerObject == null) return;
 
         CarrierClientId.Value = clientId;
         IsCarried.Value = true;
+        waitingForLanding = false;
 
-        SetCarrierClientRpc(clientId);
+        SetCarrierClientRpc(playerObject.NetworkObjectId);
     }
 
-    public void Drop(Vector3 throwDirection)
+    public void Drop(Vector3 throwDirection, bool applyThrowForce = true, float throwForceMultiplier = 1f)
     {
-        if (!IsServer) return;
+        if (!IsServer || !IsCarried.Value) return;
 
         IsCarried.Value = false;
         CarrierClientId.Value = 999;
+        CanBePickedUp.Value = false;
+        waitingForLanding = true;
+        droppedAt = Time.time;
 
         // Fisika & Collider diaktifkan kembali di Server
         if (col != null) col.enabled = true;
         if (rb != null)
         {
             rb.isKinematic = false;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
 
-            // Hitung gaya lemparan
-            Vector3 finalThrowForce = (throwDirection.normalized * throwForceForward) + (Vector3.up * throwForceUp);
-            rb.AddForce(finalThrowForce, ForceMode.Impulse);
+            if (applyThrowForce)
+            {
+                Vector3 finalThrowForce = ((throwDirection.normalized * throwForceForward) + (Vector3.up * throwForceUp)) * throwForceMultiplier;
+                rb.AddForce(finalThrowForce, ForceMode.Impulse);
+            }
         }
 
         // Kabarkan seluruh Client untuk melepas ikatan visual
         DropClientRpc();
     }
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (!IsServer || !waitingForLanding || Time.time < droppedAt + 0.1f || collision.rigidbody != null)
+            return;
+
+        for (int i = 0; i < collision.contactCount; i++)
+        {
+            if (collision.GetContact(i).normal.y > 0.5f)
+            {
+                waitingForLanding = false;
+                CanBePickedUp.Value = true;
+                break;
+            }
+        }
+    }
+
     // --- CLIENT RPCS (VISUAL & LOCAL STATE) ---
 
     [ClientRpc]
-    private void SetCarrierClientRpc(ulong clientId)
+    private void SetCarrierClientRpc(ulong playerNetworkObjectId)
     {
         // Matikan collider lokal agar tidak bentrok dengan player
         Collider[] allColliders = GetComponentsInChildren<Collider>();
@@ -85,7 +116,7 @@ public class ObjectiveItem : NetworkBehaviour
         if (rb != null) rb.isKinematic = true;
 
         // Cari Transform CarryPoint milik Player penerima
-        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(GetPlayerNetworkObjectId(clientId), out var playerNetObj))
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(playerNetworkObjectId, out var playerNetObj))
         {
             PlayerMechanics mechanics = playerNetObj.GetComponent<PlayerMechanics>();
             if (mechanics != null && mechanics.GetCarryPoint() != null)
@@ -114,9 +145,4 @@ public class ObjectiveItem : NetworkBehaviour
         }
     }
 
-    private ulong GetPlayerNetworkObjectId(ulong clientId)
-    {
-        var playerObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
-        return playerObj != null ? playerObj.NetworkObjectId : 0;
-    }
 }

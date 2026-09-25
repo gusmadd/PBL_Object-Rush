@@ -261,6 +261,7 @@ GameObject:
   - component: {fileID: 5982892867583182374}
   - component: {fileID: 253803488090658366}
   - component: {fileID: 2585010445212027850}
+  - component: {fileID: 6035316721545421704}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -407,7 +408,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2126982395
+  GlobalObjectIdHash: 2621224683
   InScenePlacedSourceGlobalObjectIdHash: 2621224683
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -589,6 +590,24 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   pickupRange: 5
   carryPoint: {fileID: 2907464221785385778}
+--- !u!114 &6035316721545421704
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6886723412606638490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a0a74cfd049a0dc4e81ec45ca86c91b6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerSledding
+  ShowTopMostFoldoutHeaderGroup: 1
+  hitbox: {fileID: 2842148272657594970}
+  slideSpeed: 16
+  slideDuration: 0.5
+  slideCooldown: 2
+  knockbackForce: 15
 --- !u!1 &6982076146850793078
 GameObject:
   m_ObjectHideFlags: 0
@@ -915,8 +934,38 @@ PrefabInstance:
     - {fileID: -4714817154256824709, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
     - {fileID: 8821623529969584324, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -1599826595754709761, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2842148272657594970}
   m_SourcePrefab: {fileID: 100100000, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+--- !u!1 &1645447078490913847 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -1599826595754709761, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+  m_PrefabInstance: {fileID: 9158504465500131528}
+  m_PrefabAsset: {fileID: 0}
+--- !u!64 &2842148272657594970
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1645447078490913847}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 2212009239438826721, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
 --- !u!4 &8688343308894451491 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
