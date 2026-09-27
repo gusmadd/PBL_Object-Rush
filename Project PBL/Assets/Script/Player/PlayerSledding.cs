@@ -12,7 +12,12 @@ public class PlayerSledding : NetworkBehaviour
     [SerializeField] private float slideSpeed = 16f;
     [SerializeField] private float slideDuration = 0.5f;
     [SerializeField] private float slideCooldown = 2f;
-    [SerializeField] private float knockbackForce = 12f;
+
+    [Header("Tackle Effect")]
+    [SerializeField] private float tackleForwardForce = 12f;
+    [SerializeField] private float tackleUpwardForce = 5f;
+    [SerializeField] private float tackleSpinForce = 8f;
+    [SerializeField] private float tackleEffectDuration = 0.75f;
 
     private Rigidbody rb;
     private PlayerMovement movement;
@@ -20,6 +25,7 @@ public class PlayerSledding : NetworkBehaviour
 
     private bool isSledding = false;
     private bool canSlide = true;
+    private bool isBeingTackled = false;
     private Quaternion originalModelRotation;
 
     private void Awake()
@@ -68,6 +74,7 @@ public class PlayerSledding : NetworkBehaviour
     {
         isSledding = true;
         canSlide = false;
+        StartCoroutine(IgnoreObjectiveCollisionsForSlide());
 
         if (movement != null) movement.IsSledding = true;
         if (visualModel != null) visualModel.localRotation = Quaternion.Euler(-60f, 0f, 0f);
@@ -105,6 +112,7 @@ public class PlayerSledding : NetworkBehaviour
         // Jika dipanggil di Server (bukan Owner lokal), jalankan gerak fisiknya di Server
         if (!IsOwner)
         {
+            StartCoroutine(IgnoreObjectiveCollisionsForSlide());
             if (movement != null) movement.IsSledding = true;
             float timer = 0f;
             while (timer < slideDuration)
@@ -124,6 +132,44 @@ public class PlayerSledding : NetworkBehaviour
         ToggleSleddingVisualClientRpc(false);
     }
 
+    private IEnumerator IgnoreObjectiveCollisionsForSlide()
+    {
+        ObjectiveItem objective = ObjectiveItem.Instance;
+        if (objective == null) yield break;
+
+        Collider[] playerColliders = GetComponentsInChildren<Collider>();
+        Collider[] objectiveColliders = objective.GetComponentsInChildren<Collider>();
+
+        float elapsed = 0f;
+        while (elapsed < slideDuration)
+        {
+            foreach (Collider playerCollider in playerColliders)
+            {
+                foreach (Collider objectiveCollider in objectiveColliders)
+                {
+                    if (playerCollider != null && objectiveCollider != null)
+                    {
+                        Physics.IgnoreCollision(playerCollider, objectiveCollider, true);
+                    }
+                }
+            }
+
+            elapsed += Time.fixedDeltaTime;
+            yield return new WaitForFixedUpdate();
+        }
+
+        foreach (Collider playerCollider in playerColliders)
+        {
+            foreach (Collider objectiveCollider in objectiveColliders)
+            {
+                if (playerCollider != null && objectiveCollider != null)
+                {
+                    Physics.IgnoreCollision(playerCollider, objectiveCollider, false);
+                }
+            }
+        }
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         if (!IsServer) return;
@@ -133,24 +179,11 @@ public class PlayerSledding : NetworkBehaviour
             // 1. Abaikan jika menabrak diri sendiri
             if (targetNetObj.OwnerClientId == OwnerClientId) return;
 
-            // --- EFEK KNOCKBACK (BERLAKU UNTUK SEMUA PLAYER YANG DITACKLE) ---
-            if (other.TryGetComponent<Rigidbody>(out var targetRb))
+            PlayerSledding targetSledding = targetNetObj.GetComponent<PlayerSledding>();
+            if (targetSledding != null)
             {
-                // Arah pentalan: Ke depan searah dorongan sledding + sedikit melayang ke atas
-                Vector3 knockDir = (targetNetObj.transform.position - transform.position).normalized + Vector3.up * 0.35f;
-
-                // Reset kecepatan korban terlebih dahulu agar pentalan konsisten
-                targetRb.linearVelocity = Vector3.zero;
-                targetRb.angularVelocity = Vector3.zero;
-
-                // Terapkan gaya pentalan
-                targetRb.AddForce(knockDir * knockbackForce, ForceMode.Impulse);
+                targetSledding.ApplyTackleEffect(transform.forward);
             }
-
-            // Matikan bentrokan fisik fisik antar-collider sementara agar penackle tidak tersangkut/memantul
-            IgnorePlayerCollisions(targetNetObj.gameObject);
-            rb.linearVelocity = new Vector3(transform.forward.x * slideSpeed, rb.linearVelocity.y, transform.forward.z * slideSpeed);
-
 
             // --- EFEK DROP OBJECTIVE (HANYA JIKA TARGET SEDANG MEMBAWA BOLA) ---
             ObjectiveItem objective = ObjectiveItem.Instance;
@@ -172,36 +205,58 @@ public class PlayerSledding : NetworkBehaviour
         }
     }
 
-    private void IgnorePlayerCollisions(GameObject target)
+    public void ApplyTackleEffect(Vector3 direction)
     {
-        Collider[] attackerColliders = GetComponentsInChildren<Collider>();
-        Collider[] targetColliders = target.GetComponentsInChildren<Collider>();
+        if (!IsServer || isBeingTackled) return;
 
-        foreach (Collider attackerCollider in attackerColliders)
+        isBeingTackled = true;
+        StartCoroutine(TackleEffectRoutine(direction));
+
+        if (OwnerClientId != NetworkManager.ServerClientId)
         {
-            foreach (Collider targetCollider in targetColliders)
+            var clientRpcParams = new ClientRpcParams
             {
-                Physics.IgnoreCollision(attackerCollider, targetCollider, true);
-            }
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds = new[] { OwnerClientId }
+                }
+            };
+            ApplyTackleEffectClientRpc(direction, clientRpcParams);
         }
-
-        StartCoroutine(RestorePlayerCollisions(attackerColliders, targetColliders));
     }
 
-    private IEnumerator RestorePlayerCollisions(Collider[] attackerColliders, Collider[] targetColliders)
+    [ClientRpc]
+    private void ApplyTackleEffectClientRpc(Vector3 direction, ClientRpcParams clientRpcParams = default)
     {
-        yield return new WaitForSeconds(0.25f);
+        if (!IsOwner || isBeingTackled) return;
 
-        foreach (Collider attackerCollider in attackerColliders)
-        {
-            foreach (Collider targetCollider in targetColliders)
-            {
-                if (attackerCollider != null && targetCollider != null)
-                {
-                    Physics.IgnoreCollision(attackerCollider, targetCollider, false);
-                }
-            }
-        }
+        isBeingTackled = true;
+        StartCoroutine(TackleEffectRoutine(direction));
+    }
+
+    private IEnumerator TackleEffectRoutine(Vector3 direction)
+    {
+        RigidbodyConstraints originalConstraints = rb.constraints;
+        if (movement != null) movement.IsSledding = true;
+
+        rb.constraints &= ~(RigidbodyConstraints.FreezeRotationX |
+                            RigidbodyConstraints.FreezeRotationY |
+                            RigidbodyConstraints.FreezeRotationZ);
+
+        Vector3 forward = Vector3.ProjectOnPlane(direction, Vector3.up).normalized;
+        rb.AddForce(forward * tackleForwardForce + Vector3.up * tackleUpwardForce, ForceMode.Impulse);
+        Vector3 spinTorque = transform.right + transform.up + transform.forward;
+        rb.AddTorque(spinTorque * tackleSpinForce, ForceMode.Impulse);
+
+        yield return new WaitForSeconds(tackleEffectDuration);
+
+        float yaw = rb.rotation.eulerAngles.y;
+        rb.angularVelocity = Vector3.zero;
+        rb.rotation = Quaternion.Euler(0f, yaw, 0f);
+        rb.constraints = originalConstraints;
+
+        if (movement != null) movement.IsSledding = false;
+        isBeingTackled = false;
     }
 
     [ClientRpc]

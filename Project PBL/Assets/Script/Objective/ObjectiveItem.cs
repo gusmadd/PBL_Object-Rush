@@ -29,6 +29,29 @@ public class ObjectiveItem : NetworkBehaviour
         netObj = GetComponent<NetworkObject>();
     }
 
+    [Header("Fall Respawn Settings")]
+    [SerializeField] private float fallYThreshold = -5f; // Batas posisi Y terendah sebelum despawn
+
+    private void Update()
+    {
+        // 1. Terapkan posisi jika sedang dibawa player
+        if (IsCarried.Value && currentCarrierPoint != null)
+        {
+            transform.position = currentCarrierPoint.position;
+            transform.rotation = currentCarrierPoint.rotation;
+        }
+
+        // 2. Cek apakah bola jatuh melebihi batas Y (Hanya dieksekusi oleh Server)
+        if (IsServer && transform.position.y < fallYThreshold)
+        {
+            if (ObjectiveSpawner.Instance != null && IsSpawned)
+            {
+                Debug.Log($"<color=orange>[ObjectiveItem] Bola jatuh di Y: {transform.position.y}! Despawn & Respawn...</color>");
+                ObjectiveSpawner.Instance.DespawnAndRespawnNext(GetComponent<NetworkObject>());
+            }
+        }
+    }
+
     private void LateUpdate()
     {
         // Secara visual, kunci posisi item ke CarryPoint pembawa di semua client
@@ -97,6 +120,15 @@ public class ObjectiveItem : NetworkBehaviour
                 waitingForLanding = false;
                 CanBePickedUp.Value = true;
                 break;
+            }
+        }
+        
+        if (collision.gameObject.CompareTag("Deadzone"))
+        {
+            if (ObjectiveSpawner.Instance != null && IsSpawned)
+            {
+                Debug.Log("<color=red>[ObjectiveItem] Menyentuh Deadzone Plane! Despawn & Respawn...</color>");
+                ObjectiveSpawner.Instance.DespawnAndRespawnNext(GetComponent<NetworkObject>());
             }
         }
     }

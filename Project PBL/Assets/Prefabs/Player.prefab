@@ -262,6 +262,7 @@ GameObject:
   - component: {fileID: 253803488090658366}
   - component: {fileID: 2585010445212027850}
   - component: {fileID: 6035316721545421704}
+  - component: {fileID: 3467833853879691366}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -319,7 +320,7 @@ MeshRenderer:
   m_SmallMeshCulling: 1
   m_ForceMeshLod: -1
   m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
+  m_RenderingLayerMask: 2
   m_RendererPriority: 0
   m_Materials:
   - {fileID: 2100000, guid: 23d7729175beb1b47956c31dffb6f2db, type: 2}
@@ -408,7 +409,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2621224683
+  GlobalObjectIdHash: 2126982395
   InScenePlacedSourceGlobalObjectIdHash: 2621224683
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -475,9 +476,9 @@ MonoBehaviour:
   SyncPositionX: 1
   SyncPositionY: 1
   SyncPositionZ: 1
-  SyncRotAngleX: 0
+  SyncRotAngleX: 1
   SyncRotAngleY: 1
-  SyncRotAngleZ: 0
+  SyncRotAngleZ: 1
   SyncScaleX: 1
   SyncScaleY: 1
   SyncScaleZ: 1
@@ -588,7 +589,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMechanics
   ShowTopMostFoldoutHeaderGroup: 1
-  pickupRange: 5
+  pickupRange: 3
   carryPoint: {fileID: 2907464221785385778}
 --- !u!114 &6035316721545421704
 MonoBehaviour:
@@ -604,10 +605,28 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerSledding
   ShowTopMostFoldoutHeaderGroup: 1
   hitbox: {fileID: 2842148272657594970}
-  slideSpeed: 16
-  slideDuration: 0.5
+  slideSpeed: 10
+  slideDuration: 0.75
   slideCooldown: 2
-  knockbackForce: 15
+  tackleForwardForce: 10
+  tackleUpwardForce: 7
+  tackleSpinForce: 5
+  tackleEffectDuration: 1.5
+--- !u!114 &3467833853879691366
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6886723412606638490}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b21c1e0c7a3160940b94470ff43520a2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerAnimation
+  ShowTopMostFoldoutHeaderGroup: 1
+  animator: {fileID: 6768639976299378503}
+  rb: {fileID: 5409112306504909019}
 --- !u!1 &6982076146850793078
 GameObject:
   m_ObjectHideFlags: 0
@@ -923,9 +942,45 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: -6093592463355912122, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -4683669308469848369, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -1806680513116206669, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -1461304994638716399, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -804731622281664130, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: -678588488315902003, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
       propertyPath: m_Name
       value: Fino MC
+      objectReference: {fileID: 0}
+    - target: {fileID: 6317578925029434746, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 6745302439343835087, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7202271454713460447, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+      propertyPath: m_RenderingLayerMask
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
@@ -935,6 +990,9 @@ PrefabInstance:
     - {fileID: 8821623529969584324, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
     m_AddedGameObjects: []
     m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6768639976299378503}
     - targetCorrespondingSourceObject: {fileID: -1599826595754709761, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
       insertIndex: -1
       addedObject: {fileID: 2842148272657594970}
@@ -966,6 +1024,33 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: 2212009239438826721, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+--- !u!1 &8347671053941337497 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
+  m_PrefabInstance: {fileID: 9158504465500131528}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &6768639976299378503
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8347671053941337497}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 05176964e01a9144780ac2b8e0d6e2c2, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!4 &8688343308894451491 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e90ba586c34092f4d85c7baf203b25cc, type: 3}
