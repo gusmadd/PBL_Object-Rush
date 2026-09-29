@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: dd5eae12e0c40bd499c457e48927342d
+guid: efb545d2410f59940a0ceb903aa6d9ea
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
@@ -31,11 +31,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Scene
-      takeName: Scene
-      internalID: -623603649343465320
-      firstFrame: 1
-      lastFrame: 204
+      name: lari bawa barang.001
+      takeName: lari bawa barang.001
+      internalID: 3458852654613774694
+      firstFrame: 0
+      lastFrame: 47
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
@@ -58,7 +58,36 @@ ModelImporter:
       transformMask: []
       maskType: 3
       maskSource: {instanceID: 0}
-      additiveReferencePoseFrame: 1
+      additiveReferencePoseFrame: 0
+    - serializedVersion: 16
+      name: idle bawa barang
+      takeName: idle bawa barang
+      internalID: -83909271648699374
+      firstFrame: 0
+      lastFrame: 203
+      wrapMode: 0
+      orientationOffsetY: 0
+      level: 0
+      cycleOffset: 0
+      loop: 0
+      hasAdditiveReferencePose: 0
+      loopTime: 1
+      loopBlend: 0
+      loopBlendOrientation: 0
+      loopBlendPositionY: 0
+      loopBlendPositionXZ: 0
+      keepOriginalOrientation: 0
+      keepOriginalPositionY: 1
+      keepOriginalPositionXZ: 0
+      heightFromFeet: 0
+      mirror: 0
+      bodyMask: 01000000010000000100000001000000010000000100000001000000010000000100000001000000010000000100000001000000
+      curves: []
+      events: []
+      transformMask: []
+      maskType: 3
+      maskSource: {instanceID: 0}
+      additiveReferencePoseFrame: 0
     isReadable: 0
   meshes:
     lODScreenPercentages: []

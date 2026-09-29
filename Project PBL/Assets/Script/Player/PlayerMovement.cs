@@ -1,4 +1,5 @@
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -25,6 +26,53 @@ public class PlayerMovement : NetworkBehaviour
     private float coyoteCounter;
     public bool IsGrounded => isGrounded;
     public bool IsSledding { get; set; } = false;
+
+    [ClientRpc]
+    public void TeleportOwnerClientRpc(Vector3 position, Quaternion rotation, ClientRpcParams clientRpcParams = default)
+    {
+        if (!IsOwner) return;
+
+        if (TryGetComponent<NetworkTransform>(out var netTransform))
+        {
+            if (!netTransform.CanCommitToTransform)
+            {
+                Debug.LogError($"[PlayerMovement] Owner {OwnerClientId} tidak berwenang mengubah transform.");
+                return;
+            }
+
+            netTransform.Teleport(position, rotation, transform.localScale);
+        }
+        else
+        {
+            transform.SetPositionAndRotation(position, rotation);
+        }
+
+        if (TryGetComponent<Rigidbody>(out var playerRigidbody))
+        {
+            playerRigidbody.position = position;
+            playerRigidbody.rotation = rotation;
+            playerRigidbody.linearVelocity = Vector3.zero;
+            playerRigidbody.angularVelocity = Vector3.zero;
+        }
+
+        Debug.Log($"[PlayerMovement] Owner {OwnerClientId} selesai teleport ke {transform.position}.");
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        if (!IsOwner) return;
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        if (!IsOwner) return;
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
 
     private void Awake()
     {
@@ -138,5 +186,29 @@ public class PlayerMovement : NetworkBehaviour
 
         jumpBufferCounter = 0f;
         coyoteCounter = 0f;
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Deadzone"))
+        {
+            RequestRespawn();
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (collision.gameObject.CompareTag("Deadzone"))
+        {
+            RequestRespawn();
+        }
+    }
+
+    private void RequestRespawn()
+    {
+        if (IsServer && PlayerSpawnManager.Instance != null)
+        {
+            PlayerSpawnManager.Instance.RespawnPlayer(OwnerClientId);
+        }
     }
 }

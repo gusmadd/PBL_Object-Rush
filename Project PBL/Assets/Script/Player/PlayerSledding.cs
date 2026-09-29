@@ -75,6 +75,7 @@ public class PlayerSledding : NetworkBehaviour
         isSledding = true;
         canSlide = false;
         StartCoroutine(IgnoreObjectiveCollisionsForSlide());
+        StartCoroutine(IgnorePlayerCollisionsForSlide());
 
         if (movement != null) movement.IsSledding = true;
         if (visualModel != null) visualModel.localRotation = Quaternion.Euler(-60f, 0f, 0f);
@@ -107,27 +108,15 @@ public class PlayerSledding : NetworkBehaviour
 
     private IEnumerator SleddingRoutineServer(Vector3 direction)
     {
+        // 1. Nyalakan hitbox tackle di server untuk cek tabrakan
         if (hitbox != null) hitbox.enabled = true;
 
-        // Jika dipanggil di Server (bukan Owner lokal), jalankan gerak fisiknya di Server
-        if (!IsOwner)
-        {
-            StartCoroutine(IgnoreObjectiveCollisionsForSlide());
-            if (movement != null) movement.IsSledding = true;
-            float timer = 0f;
-            while (timer < slideDuration)
-            {
-                rb.linearVelocity = new Vector3(direction.x * slideSpeed, rb.linearVelocity.y, direction.z * slideSpeed);
-                timer += Time.deltaTime;
-                yield return null;
-            }
-            if (movement != null) movement.IsSledding = false;
-        }
-        else
-        {
-            yield return new WaitForSeconds(slideDuration);
-        }
+        // 2. Kunci: JANGAN ubah rb.linearVelocity di Server jika ini bukan Owner!
+        // Gerakan fisik sudah ditangani dengan mulus oleh SleddingRoutineLocal di layar Owner,
+        // lalu posisinya disinkronkan ke server via NetworkTransform.
+        yield return new WaitForSeconds(slideDuration);
 
+        // 3. Matikan hitbox setelah durasi slide selesai
         if (hitbox != null) hitbox.enabled = false;
         ToggleSleddingVisualClientRpc(false);
     }
@@ -166,6 +155,41 @@ public class PlayerSledding : NetworkBehaviour
                 {
                     Physics.IgnoreCollision(playerCollider, objectiveCollider, false);
                 }
+            }
+        }
+    }
+
+    private IEnumerator IgnorePlayerCollisionsForSlide()
+    {
+        Collider[] playerColliders = GetComponentsInChildren<Collider>();
+        PlayerSledding[] otherPlayers = FindObjectsByType<PlayerSledding>();
+        var ignoredCollisions = new System.Collections.Generic.List<(Collider, Collider)>();
+
+        foreach (PlayerSledding otherPlayer in otherPlayers)
+        {
+            if (otherPlayer == this) continue;
+
+            Collider[] otherColliders = otherPlayer.GetComponentsInChildren<Collider>();
+            foreach (Collider playerCollider in playerColliders)
+            {
+                foreach (Collider otherCollider in otherColliders)
+                {
+                    if (playerCollider == null || otherCollider == null) continue;
+                    if (playerCollider == hitbox || otherCollider == otherPlayer.hitbox) continue;
+
+                    Physics.IgnoreCollision(playerCollider, otherCollider, true);
+                    ignoredCollisions.Add((playerCollider, otherCollider));
+                }
+            }
+        }
+
+        yield return new WaitForSeconds(slideDuration);
+
+        foreach (var collision in ignoredCollisions)
+        {
+            if (collision.Item1 != null && collision.Item2 != null)
+            {
+                Physics.IgnoreCollision(collision.Item1, collision.Item2, false);
             }
         }
     }
@@ -251,7 +275,7 @@ public class PlayerSledding : NetworkBehaviour
         yield return new WaitForSeconds(tackleEffectDuration);
 
         float yaw = rb.rotation.eulerAngles.y;
-        rb.angularVelocity = Vector3.zero;
+//        rb.angularVelocity = Vector3.zero;
         rb.rotation = Quaternion.Euler(0f, yaw, 0f);
         rb.constraints = originalConstraints;
 
