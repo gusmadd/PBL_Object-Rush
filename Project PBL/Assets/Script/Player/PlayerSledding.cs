@@ -78,7 +78,7 @@ public class PlayerSledding : NetworkBehaviour
         StartCoroutine(IgnorePlayerCollisionsForSlide());
 
         if (movement != null) movement.IsSledding = true;
-        if (visualModel != null) visualModel.localRotation = Quaternion.Euler(-60f, 0f, 0f);
+        if (visualModel != null) visualModel.localRotation = Quaternion.Euler(0f, -90f, 60f);
 
         float timer = 0f;
         while (timer < slideDuration)
@@ -290,7 +290,7 @@ public class PlayerSledding : NetworkBehaviour
         if (!IsOwner && visualModel != null)
         {
             if (movement != null) movement.IsSledding = active;
-            visualModel.localRotation = active ? Quaternion.Euler(-60f, 0f, 0f) : originalModelRotation;
+            visualModel.localRotation = active ? Quaternion.Euler(-60f, 0f, 90f) : originalModelRotation;
         }
     }
 }

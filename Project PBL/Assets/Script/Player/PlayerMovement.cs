@@ -9,6 +9,7 @@ public class PlayerMovement : NetworkBehaviour
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 6f;
     [SerializeField] private float rotationSpeed = 12f;
+    [SerializeField] private ParticleSystem runningParticles;
 
     [Header("Jump Settings")]
     [SerializeField] private float jumpForce = 5f;
@@ -24,6 +25,7 @@ public class PlayerMovement : NetworkBehaviour
     private Vector3 moveInput;
     private float jumpBufferCounter;
     private float coyoteCounter;
+    private bool runParticleActive;
     public bool IsGrounded => isGrounded;
     public bool IsSledding { get; set; } = false;
 
@@ -80,6 +82,9 @@ public class PlayerMovement : NetworkBehaviour
         capsuleCollider = GetComponent<CapsuleCollider>();
 
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+
+        if (runningParticles != null)
+            runningParticles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
     }
 
     private void Start()
@@ -134,10 +139,33 @@ public class PlayerMovement : NetworkBehaviour
 
         jumpBufferCounter -= Time.fixedDeltaTime;
 
+        bool isRunning = !IsSledding && isGrounded && moveInput.sqrMagnitude > 0.01f;
+        if (isRunning != runParticleActive)
+        {
+            runParticleActive = isRunning;
+            SetRunningParticleServerRpc(isRunning);
+        }
+
         if (IsSledding) return;
 
         HandleMovementInput();
         HandleJumpInput();
+    }
+    [ServerRpc]
+    private void SetRunningParticleServerRpc(bool isRunning)
+    {
+        SetRunningParticleClientRpc(isRunning);
+    }
+
+    [ClientRpc]
+    private void SetRunningParticleClientRpc(bool isRunning)
+    {
+        if (runningParticles == null) return;
+
+        if (isRunning)
+            runningParticles.Play();
+        else
+            runningParticles.Stop(true, ParticleSystemStopBehavior.StopEmitting);
     }
 
     private void CheckGrounded()

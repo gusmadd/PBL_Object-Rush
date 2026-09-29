@@ -2445,7 +2445,7 @@ MonoBehaviour:
   - {fileID: 3908828964260408886, guid: d28c1b55af8db9241b7c34dc521d0e63, type: 3}
   - {fileID: 2375120332517009081, guid: 24be597e3dc588540be66c8aca8d93fe, type: 3}
   - {fileID: 1802088465229117814, guid: 07db9717b7a2a5042a6e70f8e305571b, type: 3}
-  centerPoint: {x: 0, y: 50, z: 0}
+  centerPoint: {x: 0, y: 75, z: 0}
   spawnRadius: 20
 --- !u!4 &1693450870
 Transform:
@@ -2456,7 +2456,7 @@ Transform:
   m_GameObject: {fileID: 1693450867}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 50, z: -0}
+  m_LocalPosition: {x: 0, y: 75, z: -0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
