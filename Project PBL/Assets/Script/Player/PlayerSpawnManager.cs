@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
-using Unity.Netcode.Components; // Wajib import ini
+using Unity.Netcode.Components;
 using UnityEngine;
 
 public class PlayerSpawnManager : MonoBehaviour
@@ -12,6 +12,8 @@ public class PlayerSpawnManager : MonoBehaviour
     [SerializeField] private List<Transform> spawnPoints = new List<Transform>();
 
     private int currentSpawnIndex = 0;
+    private readonly Dictionary<ulong, Vector3> initialSpawnPositions = new Dictionary<ulong, Vector3>();
+    private readonly HashSet<ulong> respawningClients = new HashSet<ulong>();
 
     private void Awake()
     {
@@ -46,10 +48,35 @@ public class PlayerSpawnManager : MonoBehaviour
         // Hanya eksekusi di Server/Host
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
 
-        StartCoroutine(PlacePlayerWhenReady(clientId));
+        if (spawnPoints == null || spawnPoints.Count == 0)
+        {
+            Debug.LogError("[PlayerSpawnManager] Tidak ada spawn point yang terdaftar.");
+            return;
+        }
+
+        Vector3 spawnPosition = GetNextSpawnPosition();
+        initialSpawnPositions[clientId] = spawnPosition;
+        StartCoroutine(PlacePlayerWhenReady(clientId, spawnPosition));
     }
 
-    private IEnumerator PlacePlayerWhenReady(ulong clientId)
+    public void RespawnPlayer(ulong clientId)
+    {
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer)
+            return;
+
+        if (!initialSpawnPositions.TryGetValue(clientId, out Vector3 spawnPosition) || !respawningClients.Add(clientId))
+            return;
+
+        StartCoroutine(RespawnPlayerWhenReady(clientId, spawnPosition));
+    }
+
+    private IEnumerator RespawnPlayerWhenReady(ulong clientId, Vector3 spawnPosition)
+    {
+        yield return PlacePlayerWhenReady(clientId, spawnPosition);
+        respawningClients.Remove(clientId);
+    }
+
+    private IEnumerator PlacePlayerWhenReady(ulong clientId, Vector3 spawnPosition)
     {
         NetworkObject playerNetObj = null;
 
@@ -68,30 +95,53 @@ public class PlayerSpawnManager : MonoBehaviour
             yield break;
         }
 
-        if (spawnPoints == null || spawnPoints.Count == 0)
-        {
-            Debug.LogError("[PlayerSpawnManager] Tidak ada spawn point yang terdaftar.");
-            yield break;
-        }
-
-        Vector3 spawnPosition = GetNextSpawnPosition();
         Quaternion spawnRotation = Quaternion.identity;
 
-        playerNetObj.transform.SetPositionAndRotation(spawnPosition, spawnRotation);
-
-        if (playerNetObj.TryGetComponent<Rigidbody>(out var rigidbody))
+        if (playerNetObj.TryGetComponent<NetworkTransform>(out var netTransform) && !netTransform.CanCommitToTransform)
         {
-            rigidbody.position = spawnPosition;
-            rigidbody.rotation = spawnRotation;
-
-            if (!rigidbody.isKinematic)
+            PlayerMovement playerMovement = playerNetObj.GetComponent<PlayerMovement>();
+            if (playerMovement == null)
             {
-                rigidbody.linearVelocity = Vector3.zero;
-                rigidbody.angularVelocity = Vector3.zero;
+                Debug.LogError($"[PlayerSpawnManager] PlayerMovement untuk client {clientId} tidak ditemukan.");
+                yield break;
             }
+
+            ClientRpcParams clientRpcParams = new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds = new[] { clientId }
+                }
+            };
+
+            playerMovement.TeleportOwnerClientRpc(spawnPosition, spawnRotation, clientRpcParams);
+        }
+        else
+        {
+            ApplyTeleport(playerNetObj, spawnPosition, spawnRotation);
         }
 
-        Debug.Log($"[PlayerSpawnManager] Client {clientId} spawn di {spawnPosition}.");
+        Debug.Log($"[PlayerSpawnManager] Posisi spawn {spawnPosition} diproses untuk client {clientId}.");
+    }
+
+    private void ApplyTeleport(NetworkObject playerNetObj, Vector3 position, Quaternion rotation)
+    {
+        if (playerNetObj.TryGetComponent<NetworkTransform>(out var netTransform))
+        {
+            netTransform.Teleport(position, rotation, playerNetObj.transform.localScale);
+        }
+        else
+        {
+            playerNetObj.transform.SetPositionAndRotation(position, rotation);
+        }
+
+        if (playerNetObj.TryGetComponent<Rigidbody>(out var rb))
+        {
+            rb.position = position;
+            rb.rotation = rotation;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+        }
     }
 
     public Vector3 GetNextSpawnPosition()

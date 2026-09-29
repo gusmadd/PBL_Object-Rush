@@ -522,6 +522,7 @@ MonoBehaviour:
     m_InternalValue: 1
   throwForceForward: 10
   throwForceUp: 6
+  fallYThreshold: -5
 --- !u!1 &1916521928860386121 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -8116613859084990610, guid: 33b838661df4df44cb19d7d171271763, type: 3}

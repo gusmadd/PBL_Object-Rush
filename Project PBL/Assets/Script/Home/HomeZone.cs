@@ -9,7 +9,7 @@ public class HomeZone : NetworkBehaviour
 
     [Header("Local Visual Effect")]
     [Tooltip("Komponen Light yang dipasang di dalam Home (Spotlight / Point Light)")]
-    [SerializeField] private Light homeLight;
+    [SerializeField] private GameObject homeLight;
 
     public ulong ZoneOwnerClientId => zoneOwnerClientId;
 
@@ -18,7 +18,7 @@ public class HomeZone : NetworkBehaviour
         // Pastikan lampu mati terlebih dahulu saat game baru start
         if (homeLight != null)
         {
-            homeLight.enabled = false;
+            homeLight.SetActive(false);
         }
     }
 
@@ -29,7 +29,7 @@ public class HomeZone : NetworkBehaviour
         {
             if (homeLight != null)
             {
-                homeLight.enabled = true; // Nyalakan cahaya KHUSUS untuk pemilik rumah di PC ini
+                homeLight.SetActive(true); // Nyalakan cahaya KHUSUS untuk pemilik rumah di PC ini
                 Debug.Log($"<color=yellow>[HomeZone] Efek cahaya dinyalakan untuk Rumah Player {zoneOwnerClientId}!</color>");
             }
         }
@@ -49,6 +49,10 @@ public class HomeZone : NetworkBehaviour
                     if (netObj != null && netObj.IsSpawned)
                     {
                         Debug.Log($"<color=green>[GOAL!] Objective mengenai Rumah Player {zoneOwnerClientId}!</color>");
+                                                if (GameManager.Instance != null)
+                        {
+                            GameManager.Instance.AddScore(zoneOwnerClientId, 10);
+                        }
 
                         if (ObjectiveSpawner.Instance != null)
                         {
@@ -61,4 +65,5 @@ public class HomeZone : NetworkBehaviour
             }
         }
     }
+    
 }
