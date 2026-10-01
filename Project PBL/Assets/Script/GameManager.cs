@@ -7,42 +7,74 @@ public class GameManager : NetworkBehaviour
     public static GameManager Instance { get; private set; }
 
     [Header("Match Settings")]
-    [SerializeField] private float matchDuration = 180f; // 3 Menit
-    [SerializeField] private int targetScore = 50;       // Skor maksimal untuk menang cepat
+    [SerializeField] private float matchDuration = 60f; // 5 Menit
 
     [Header("Network Sync States")]
-    public NetworkVariable<float> TimeRemaining = new NetworkVariable<float>(180f);
+    public NetworkVariable<float> TimeRemaining = new NetworkVariable<float>(60f);
     public NetworkVariable<bool> IsGameActive = new NetworkVariable<bool>(false);
 
-    // Dictionary lokal untuk menyimpan skor tiap ClientId
-    public Dictionary<ulong, int> PlayerScores = new Dictionary<ulong, int>();
+    public Dictionary<ulong, int> PlayerScores { get; private set; } = new Dictionary<ulong, int>();
+    private Dictionary<ulong, float> lastScoreTime = new Dictionary<ulong, float>();
 
     private void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+        Instance = this;
     }
 
     public override void OnNetworkSpawn()
     {
         if (IsServer)
         {
+            IsGameActive.Value = false; // KUNCI: Game masih MATI saat di Room Lobby
             TimeRemaining.Value = matchDuration;
-            IsGameActive.Value = true;
+        }
+
+        // Pasang listener: Jika IsGameActive berubah jadi true, sembunyikan UI Menu di semua Client
+        IsGameActive.OnValueChanged += OnGameActiveChanged;
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        IsGameActive.OnValueChanged -= OnGameActiveChanged;
+    }
+
+    // DIPANGGIL OLEH HOST SAAT TEKAN TOMBOL "START GAME" DI ROOM PANEL
+    public void StartGameFromHost()
+    {
+        if (!IsServer) return;
+
+        IsGameActive.Value = true; // RESMI MULAI GAME
+        TimeRemaining.Value = matchDuration;
+
+        // Spawn bola pertama di arena
+        if (ObjectiveSpawner.Instance != null)
+        {
+            ObjectiveSpawner.Instance.SpawnRandomObjective();
+        }
+    }
+
+    private void OnGameActiveChanged(bool previousValue, bool newValue)
+    {
+        // Jika game diaktifkan, sembunyikan semua Panel Menu di layar player
+        if (newValue == true)
+        {
+            if (NetworkUI.Instance != null)
+            {
+                NetworkUI.Instance.HideAllPanels();
+            }
         }
     }
 
     private void Update()
     {
+        // Hanya jalan jika game SUDAH AKTIF
         if (!IsServer || !IsGameActive.Value) return;
 
-        // Jalankan Countdown Timer di Server
         if (TimeRemaining.Value > 0)
         {
             TimeRemaining.Value -= Time.deltaTime;
@@ -54,54 +86,62 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    // Dipanggil dari HomeZone.cs ketika Player berhasil membawa bola ke goal
+    public int GetScore(ulong clientId)
+    {
+        return PlayerScores.ContainsKey(clientId) ? PlayerScores[clientId] : 0;
+    }
+
     public void AddScore(ulong clientId, int points)
     {
         if (!IsServer || !IsGameActive.Value) return;
 
         if (!PlayerScores.ContainsKey(clientId))
         {
-            PlayerScores.Add(clientId, 0);
+            PlayerScores[clientId] = 0;
+            lastScoreTime[clientId] = Time.time;
         }
 
         PlayerScores[clientId] += points;
-        Debug.Log($"<color=green>[SCORE] Player ID {clientId} menambah {points} Poin! Total: {PlayerScores[clientId]}</color>");
+        lastScoreTime[clientId] = Time.time;
 
-        // Sync ke semua Client
         UpdateScoreClientRpc(clientId, PlayerScores[clientId]);
-
-        // Cek jika sudah mencapai Target Skor
-        if (PlayerScores[clientId] >= targetScore)
-        {
-            EndMatch();
-        }
+        Debug.Log($"<color=cyan>[SCORE] Player {clientId} mendapatkan {points} poin. Total Skor: {PlayerScores[clientId]}</color>");
     }
 
     [ClientRpc]
     private void UpdateScoreClientRpc(ulong clientId, int newScore)
     {
-        if (!PlayerScores.ContainsKey(clientId))
-        {
-            PlayerScores.Add(clientId, 0);
-        }
         PlayerScores[clientId] = newScore;
     }
 
     private void EndMatch()
     {
         IsGameActive.Value = false;
-        Debug.Log("<color=yellow>[GAME OVER] Pertandingan Selesai!</color>");
+        Debug.Log("<color=yellow>[GAME OVER] Waktu Habis!</color>");
 
-        // Cari pemenang dengan skor tertinggi
         ulong winnerId = 0;
         int highestScore = -1;
+        float earliestGoalTime = float.MaxValue;
 
         foreach (var entry in PlayerScores)
         {
-            if (entry.Value > highestScore)
+            ulong pId = entry.Key;
+            int score = entry.Value;
+            float timeAchieved = lastScoreTime.ContainsKey(pId) ? lastScoreTime[pId] : float.MaxValue;
+
+            if (score > highestScore)
             {
-                highestScore = entry.Value;
-                winnerId = entry.Key;
+                highestScore = score;
+                earliestGoalTime = timeAchieved;
+                winnerId = pId;
+            }
+            else if (score == highestScore && score > 0)
+            {
+                if (timeAchieved < earliestGoalTime)
+                {
+                    earliestGoalTime = timeAchieved;
+                    winnerId = pId;
+                }
             }
         }
 
@@ -111,7 +151,6 @@ public class GameManager : NetworkBehaviour
     [ClientRpc]
     private void NotifyGameOverClientRpc(ulong winnerClientId, int finalScore)
     {
-        Debug.Log($"[RESULT] Pemenangnya adalah Player ID: {winnerClientId} dengan Skor: {finalScore}");
-        // Nanti di sini dipanggil UI Game Over / Victory Screen
+        Debug.Log($"<color=green>[WINNER] Player {winnerClientId} Menang! dengan skor {finalScore}</color>");
     }
 }

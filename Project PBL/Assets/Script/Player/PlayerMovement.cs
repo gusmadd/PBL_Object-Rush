@@ -99,6 +99,21 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (!IsOwner || !Application.isFocused || Keyboard.current == null)
             return;
+        if (GameManager.Instance != null && GameManager.Instance.IsGameActive.Value)
+        {
+            // Saat Game Berjalan: Kunci kursor untuk mengontrol kamera
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
+        }
+        else
+        {
+            // Saat di Menu / Lobby: Tampilkan kursor agar bisa klik UI
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+
+            // Jangan proses pergerakan player jika game belum dimulai
+            return;
+        }
 
         if (mainCameraTransform == null && Camera.main != null)
         {

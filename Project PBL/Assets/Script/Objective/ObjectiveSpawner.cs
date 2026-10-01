@@ -30,13 +30,13 @@ public class ObjectiveSpawner : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        if (IsServer)
+       /* if (IsServer)
         {
             if (currentObjectiveNetObj == null && !isSpawning)
             {
                 SpawnRandomObjective();
             }
-        }
+        }*/
     }
 
     // --- FUNGSI AMBIL POSISI ACAK DI DALAM LINGKARAN ---

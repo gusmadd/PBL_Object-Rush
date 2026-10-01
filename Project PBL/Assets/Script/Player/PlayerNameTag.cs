@@ -8,11 +8,10 @@ public class PlayerNameTag : NetworkBehaviour
     [SerializeField] private TMP_Text nameText;
     [SerializeField] private Transform canvasTransform;
 
-    // NetworkVariable untuk menyinkronkan nama player ke semua client secara otomatis
     public NetworkVariable<FixedString32Bytes> PlayerName = new NetworkVariable<FixedString32Bytes>(
         new FixedString32Bytes("Player"),
         NetworkVariableReadPermission.Everyone,
-        NetworkVariableWritePermission.Owner // Owner boleh mengubah namanya sendiri
+        NetworkVariableWritePermission.Owner
     );
 
     private Transform mainCameraTransform;
@@ -27,28 +26,41 @@ public class PlayerNameTag : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        // Subscribe event: Jika variabel nama berubah, update tampilan UI Text
         PlayerName.OnValueChanged += OnNameChanged;
 
-        // Tampilkan nama awal
+        // Tampilkan nama saat ini
         UpdateNameDisplay(PlayerName.Value.ToString());
 
-        // Contoh: Set nama default saat pertama kali spawn jika belum diset
+        if (NetworkUI.Instance != null)
+        {
+            NetworkUI.Instance.RegisterPlayerName(OwnerClientId, PlayerName.Value.ToString());
+        }
+
+        // Jika player ini milik client lokal, set namanya dari NetworkUI.LocalUsername
         if (IsOwner)
         {
-            // Nanti nilai ini bisa diambil dari input UI Nama buatan Sultan
-            SetPlayerName($"Player {OwnerClientId + 1}");
+            SetPlayerName(NetworkUI.LocalUsername);
         }
     }
 
     public override void OnNetworkDespawn()
     {
         PlayerName.OnValueChanged -= OnNameChanged;
+
+        if (NetworkUI.Instance != null)
+        {
+            NetworkUI.Instance.RemovePlayerName(OwnerClientId);
+        }
     }
 
     private void Update()
     {
-        // Billboard effect: Bikin UI Text Nama selalu menghadap ke Kamera
+        // Billboard effect ke kamera
+        if (mainCameraTransform == null && Camera.main != null)
+        {
+            mainCameraTransform = Camera.main.transform;
+        }
+
         if (mainCameraTransform != null && canvasTransform != null)
         {
             canvasTransform.rotation = Quaternion.LookRotation(canvasTransform.position - mainCameraTransform.position);
@@ -66,6 +78,12 @@ public class PlayerNameTag : NetworkBehaviour
     private void OnNameChanged(FixedString32Bytes previousValue, FixedString32Bytes newValue)
     {
         UpdateNameDisplay(newValue.ToString());
+
+        // Informasikan ke Room Lobby bahwa nama player telah diperbarui
+        if (NetworkUI.Instance != null)
+        {
+            NetworkUI.Instance.RegisterPlayerName(OwnerClientId, newValue.ToString());
+        }
     }
 
     private void UpdateNameDisplay(string nameToDisplay)

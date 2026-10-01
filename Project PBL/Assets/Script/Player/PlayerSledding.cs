@@ -12,6 +12,7 @@ public class PlayerSledding : NetworkBehaviour
     [SerializeField] private float slideSpeed = 16f;
     [SerializeField] private float slideDuration = 0.5f;
     [SerializeField] private float slideCooldown = 2f;
+    [SerializeField] private ParticleSystem sleddingParticles;
 
     [Header("Tackle Effect")]
     [SerializeField] private float tackleForwardForce = 12f;
@@ -74,6 +75,7 @@ public class PlayerSledding : NetworkBehaviour
     {
         isSledding = true;
         canSlide = false;
+        SetSleddingParticles(true);
         StartCoroutine(IgnoreObjectiveCollisionsForSlide());
         StartCoroutine(IgnorePlayerCollisionsForSlide());
 
@@ -91,6 +93,7 @@ public class PlayerSledding : NetworkBehaviour
         if (movement != null) movement.IsSledding = false;
         if (visualModel != null) visualModel.localRotation = originalModelRotation;
 
+        SetSleddingParticles(false);
         isSledding = false;
 
         yield return new WaitForSeconds(slideCooldown);
@@ -286,11 +289,23 @@ public class PlayerSledding : NetworkBehaviour
     [ClientRpc]
     private void ToggleSleddingVisualClientRpc(bool active)
     {
+        SetSleddingParticles(active);
+
         // Untuk player lain yang melihat (Non-Owner), sesuaikan rotasi visualnya
         if (!IsOwner && visualModel != null)
         {
             if (movement != null) movement.IsSledding = active;
             visualModel.localRotation = active ? Quaternion.Euler(-60f, 0f, 90f) : originalModelRotation;
         }
+    }
+
+    private void SetSleddingParticles(bool active)
+    {
+        if (sleddingParticles == null) return;
+
+        if (active)
+            sleddingParticles.Play();
+        else
+            sleddingParticles.Stop(true, ParticleSystemStopBehavior.StopEmitting);
     }
 }

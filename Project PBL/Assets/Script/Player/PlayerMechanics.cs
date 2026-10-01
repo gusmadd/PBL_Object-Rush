@@ -30,6 +30,7 @@ public class PlayerMechanics : NetworkBehaviour
         if (carriedObjective != null)
         {
             // Lempar Item!
+            PlayThrowAnimationClientRpc();
             carriedObjective.Drop(transform.forward);
             Debug.Log($"[Server] Player {OwnerClientId} melempar item!");
         }
@@ -65,5 +66,15 @@ public class PlayerMechanics : NetworkBehaviour
             }
         }
         return null;
+    }
+
+    [ClientRpc]
+    private void PlayThrowAnimationClientRpc()
+    {
+        PlayerAnimation playerAnim = GetComponent<PlayerAnimation>();
+        if (playerAnim != null)
+        {
+            playerAnim.TriggerThrowAnimation();
+        }
     }
 }
