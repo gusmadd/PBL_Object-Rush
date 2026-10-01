@@ -14,7 +14,8 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<bool> IsGameActive = new NetworkVariable<bool>(false);
 
     public Dictionary<ulong, int> PlayerScores { get; private set; } = new Dictionary<ulong, int>();
-    private Dictionary<ulong, float> lastScoreTime = new Dictionary<ulong, float>();
+    private Dictionary<ulong, ulong> scoreOrder = new Dictionary<ulong, ulong>();
+    private ulong nextScoreOrder;
 
     private void Awake()
     {
@@ -47,6 +48,11 @@ public class GameManager : NetworkBehaviour
     public void StartGameFromHost()
     {
         if (!IsServer) return;
+
+        PlayerScores.Clear();
+        scoreOrder.Clear();
+        nextScoreOrder = 0;
+        ResetScoresClientRpc();
 
         IsGameActive.Value = true; // RESMI MULAI GAME
         TimeRemaining.Value = matchDuration;
@@ -91,6 +97,11 @@ public class GameManager : NetworkBehaviour
         return PlayerScores.ContainsKey(clientId) ? PlayerScores[clientId] : 0;
     }
 
+    public ulong GetScoreOrder(ulong clientId)
+    {
+        return scoreOrder.TryGetValue(clientId, out ulong order) ? order : ulong.MaxValue;
+    }
+
     public void AddScore(ulong clientId, int points)
     {
         if (!IsServer || !IsGameActive.Value) return;
@@ -98,20 +109,20 @@ public class GameManager : NetworkBehaviour
         if (!PlayerScores.ContainsKey(clientId))
         {
             PlayerScores[clientId] = 0;
-            lastScoreTime[clientId] = Time.time;
         }
 
         PlayerScores[clientId] += points;
-        lastScoreTime[clientId] = Time.time;
+        scoreOrder[clientId] = ++nextScoreOrder;
 
-        UpdateScoreClientRpc(clientId, PlayerScores[clientId]);
+        UpdateScoreClientRpc(clientId, PlayerScores[clientId], scoreOrder[clientId]);
         Debug.Log($"<color=cyan>[SCORE] Player {clientId} mendapatkan {points} poin. Total Skor: {PlayerScores[clientId]}</color>");
     }
 
     [ClientRpc]
-    private void UpdateScoreClientRpc(ulong clientId, int newScore)
+    private void UpdateScoreClientRpc(ulong clientId, int newScore, ulong newScoreOrder)
     {
         PlayerScores[clientId] = newScore;
+        scoreOrder[clientId] = newScoreOrder;
     }
 
     private void EndMatch()
@@ -119,38 +130,50 @@ public class GameManager : NetworkBehaviour
         IsGameActive.Value = false;
         Debug.Log("<color=yellow>[GAME OVER] Waktu Habis!</color>");
 
-        ulong winnerId = 0;
-        int highestScore = -1;
-        float earliestGoalTime = float.MaxValue;
+        if (NetworkManager.Singleton == null) return;
 
-        foreach (var entry in PlayerScores)
+        List<ulong> rankedClients = new List<ulong>(NetworkManager.Singleton.ConnectedClientsIds);
+        Dictionary<ulong, int> connectionOrder = new Dictionary<ulong, int>();
+        for (int i = 0; i < rankedClients.Count; i++)
         {
-            ulong pId = entry.Key;
-            int score = entry.Value;
-            float timeAchieved = lastScoreTime.ContainsKey(pId) ? lastScoreTime[pId] : float.MaxValue;
-
-            if (score > highestScore)
-            {
-                highestScore = score;
-                earliestGoalTime = timeAchieved;
-                winnerId = pId;
-            }
-            else if (score == highestScore && score > 0)
-            {
-                if (timeAchieved < earliestGoalTime)
-                {
-                    earliestGoalTime = timeAchieved;
-                    winnerId = pId;
-                }
-            }
+            connectionOrder[rankedClients[i]] = i;
         }
 
-        NotifyGameOverClientRpc(winnerId, highestScore);
+        rankedClients.Sort((firstId, secondId) =>
+        {
+            int scoreComparison = GetScore(secondId).CompareTo(GetScore(firstId));
+            if (scoreComparison != 0) return scoreComparison;
+
+            int scoreOrderComparison = GetScoreOrder(firstId).CompareTo(GetScoreOrder(secondId));
+            if (scoreOrderComparison != 0) return scoreOrderComparison;
+
+            return connectionOrder[firstId].CompareTo(connectionOrder[secondId]);
+        });
+
+        NotifyGameOverClientRpc(rankedClients.ToArray());
     }
 
     [ClientRpc]
-    private void NotifyGameOverClientRpc(ulong winnerClientId, int finalScore)
+    private void ResetScoresClientRpc()
     {
-        Debug.Log($"<color=green>[WINNER] Player {winnerClientId} Menang! dengan skor {finalScore}</color>");
+        PlayerScores.Clear();
+        scoreOrder.Clear();
+        nextScoreOrder = 0;
+    }
+
+    [ClientRpc]
+    private void NotifyGameOverClientRpc(ulong[] rankedClientIds)
+    {
+        Time.timeScale = 0f;
+
+        if (NetworkUI.Instance != null)
+        {
+            NetworkUI.Instance.ShowGameOver(rankedClientIds);
+        }
+
+        if (rankedClientIds.Length > 0)
+        {
+            Debug.Log($"<color=green>[WINNER] Player {rankedClientIds[0]} Menang dengan skor {GetScore(rankedClientIds[0])}</color>");
+        }
     }
 }

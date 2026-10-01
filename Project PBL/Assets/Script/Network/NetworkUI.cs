@@ -12,6 +12,13 @@ public class NetworkUI : MonoBehaviour
     [SerializeField] private GameObject mainMenuPanel;
     [SerializeField] private GameObject roomPanel;
 
+    [Header("Game Over UI")]
+    [SerializeField] private GameObject gameOverPanel;
+    [SerializeField] private TextMeshProUGUI firstPlaceText;
+    [SerializeField] private TextMeshProUGUI secondPlaceText;
+    [SerializeField] private TextMeshProUGUI thirdPlaceText;
+    [SerializeField] private Button backToMainMenuBtn;
+
     [Header("Main Menu UI")]
     [SerializeField] private TMP_InputField usernameInput;
     [SerializeField] private Button hostBtn;
@@ -34,6 +41,7 @@ public class NetworkUI : MonoBehaviour
 
         mainMenuPanel.SetActive(true);
         roomPanel.SetActive(false);
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -69,6 +77,11 @@ public class NetworkUI : MonoBehaviour
             }
             CloseRoomPanel();
         });
+
+        if (backToMainMenuBtn != null)
+        {
+            backToMainMenuBtn.onClick.AddListener(ReturnToMainMenu);
+        }
 
         startGameBtn.onClick.AddListener(() =>
         {
@@ -114,6 +127,7 @@ public class NetworkUI : MonoBehaviour
 
     private void OpenRoomPanel(bool isHost)
     {
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
         mainMenuPanel.SetActive(true);
         roomPanel.SetActive(true);
 
@@ -137,8 +151,11 @@ public class NetworkUI : MonoBehaviour
     private void CloseRoomPanel()
     {
         roomPanel.SetActive(false);
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
         mainMenuPanel.SetActive(true);
         SetMainMenuButtonsInteractable(true);
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
     }
 
     private void SetMainMenuButtonsInteractable(bool state)
@@ -226,8 +243,46 @@ public class NetworkUI : MonoBehaviour
     {
         mainMenuPanel.SetActive(false);
         roomPanel.SetActive(false);
+        if (gameOverPanel != null) gameOverPanel.SetActive(false);
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+    }
+
+    public void ShowGameOver(ulong[] rankedClientIds)
+    {
+        if (gameOverPanel == null) return;
+
+        mainMenuPanel.SetActive(false);
+        roomPanel.SetActive(false);
+        gameOverPanel.SetActive(true);
+
+        SetRankText(firstPlaceText, rankedClientIds, 0);
+        SetRankText(secondPlaceText, rankedClientIds, 1);
+        SetRankText(thirdPlaceText, rankedClientIds, 2);
+
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    private void SetRankText(TextMeshProUGUI rankText, ulong[] rankedClientIds, int rankIndex)
+    {
+        if (rankText == null) return;
+
+        rankText.text = rankIndex < rankedClientIds.Length
+            ? GetDisplayNameForClient(rankedClientIds[rankIndex])
+            : "No player";
+    }
+
+    private void ReturnToMainMenu()
+    {
+        Time.timeScale = 1f;
+
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsListening)
+        {
+            NetworkManager.Singleton.Shutdown();
+        }
+
+        CloseRoomPanel();
     }
 }

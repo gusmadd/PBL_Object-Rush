@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
@@ -58,27 +59,38 @@ public class InGameHUDManager : MonoBehaviour
         if (NetworkManager.Singleton == null || playerScoreTexts == null) return;
 
         var connectedClients = NetworkManager.Singleton.ConnectedClientsIds;
-        int count = connectedClients.Count;
+        List<ulong> rankedClients = new List<ulong>(connectedClients);
+        Dictionary<ulong, int> connectionOrder = new Dictionary<ulong, int>();
+
+        for (int i = 0; i < connectedClients.Count; i++)
+        {
+            connectionOrder[connectedClients[i]] = i;
+        }
+
+        rankedClients.Sort((firstId, secondId) =>
+        {
+            int scoreComparison = GameManager.Instance.GetScore(secondId).CompareTo(GameManager.Instance.GetScore(firstId));
+            if (scoreComparison != 0) return scoreComparison;
+
+            int scoreOrderComparison = GameManager.Instance.GetScoreOrder(firstId).CompareTo(GameManager.Instance.GetScoreOrder(secondId));
+            if (scoreOrderComparison != 0) return scoreOrderComparison;
+
+            return connectionOrder[firstId].CompareTo(connectionOrder[secondId]);
+        });
 
         for (int i = 0; i < playerScoreTexts.Length; i++)
         {
-            if (i < count)
+            if (i < rankedClients.Count)
             {
-                ulong clientId = connectedClients[i];
+                ulong clientId = rankedClients[i];
                 string playerName = $"Player {clientId}";
-                int score = 0;
+                int score = GameManager.Instance.GetScore(clientId);
 
                 // Ambil nama dari cache yang sudah diupdate oleh PlayerNameTag.
                 // Ini aman untuk semua client, karena tidak memanggil API server-only.
                 if (NetworkUI.Instance != null)
                 {
                     playerName = NetworkUI.Instance.GetDisplayNameForClient(clientId);
-                }
-
-                // Ambil Skor dari GameManager
-                if (GameManager.Instance.PlayerScores.ContainsKey(clientId))
-                {
-                    score = GameManager.Instance.PlayerScores[clientId];
                 }
 
                 playerScoreTexts[i].text = $"{playerName}: {score} PTS";

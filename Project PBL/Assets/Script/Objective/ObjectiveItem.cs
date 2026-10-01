@@ -13,12 +13,14 @@ public class ObjectiveItem : NetworkBehaviour
     [Header("Throw Settings")]
     [SerializeField] private float throwForceForward = 8f;
     [SerializeField] private float throwForceUp = 3f;
+    [SerializeField] private float spawnBounceImpulse = 1f;
 
     private Rigidbody rb;
     private Collider col;
     private NetworkObject netObj;
     private Transform currentCarrierPoint;
     private bool waitingForLanding;
+    private bool hasBouncedOnSpawn;
     private float droppedAt;
 
     private void Awake()
@@ -110,15 +112,24 @@ public class ObjectiveItem : NetworkBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (!IsServer || !waitingForLanding || Time.time < droppedAt + 0.1f || collision.rigidbody != null)
+        if (!IsServer || Time.time < droppedAt + 0.1f || collision.rigidbody != null)
             return;
 
         for (int i = 0; i < collision.contactCount; i++)
         {
             if (collision.GetContact(i).normal.y > 0.5f)
             {
-                waitingForLanding = false;
-                CanBePickedUp.Value = true;
+                if (!hasBouncedOnSpawn && rb != null)
+                {
+                    rb.AddForce(Vector3.up * spawnBounceImpulse, ForceMode.Impulse);
+                    hasBouncedOnSpawn = true;
+                }
+
+                if (waitingForLanding)
+                {
+                    waitingForLanding = false;
+                    CanBePickedUp.Value = true;
+                }
                 break;
             }
         }
