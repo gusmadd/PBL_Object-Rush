@@ -96,7 +96,17 @@ public class PlayerSledding : NetworkBehaviour
         SetSleddingParticles(false);
         isSledding = false;
 
-        yield return new WaitForSeconds(slideCooldown);
+        InGameHUDManager.Instance?.SetSleddingCooldown(0f);
+
+        float cooldownTimer = 0f;
+        while (cooldownTimer < slideCooldown)
+        {
+            cooldownTimer += Time.deltaTime;
+            InGameHUDManager.Instance?.SetSleddingCooldown(cooldownTimer / slideCooldown);
+            yield return null;
+        }
+
+        InGameHUDManager.Instance?.HideSleddingCooldown();
         canSlide = true;
     }
 

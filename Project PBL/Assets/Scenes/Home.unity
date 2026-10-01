@@ -2021,10 +2021,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Game Manager
       objectReference: {fileID: 0}
-    - target: {fileID: 3796824444080562192, guid: 19fb282f5067eff4b9b46a2c6c86b153, type: 3}
-      propertyPath: matchDuration
-      value: 60
-      objectReference: {fileID: 0}
     - target: {fileID: 4469984544894428414, guid: 19fb282f5067eff4b9b46a2c6c86b153, type: 3}
       propertyPath: m_InScenePlaced
       value: 1

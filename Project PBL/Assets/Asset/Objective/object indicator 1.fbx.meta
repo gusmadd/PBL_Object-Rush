@@ -3,7 +3,12 @@ guid: 42597747575478446b02898afdeac1eb
 ModelImporter:
   serializedVersion: 24200
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Texture2D
+      assembly: UnityEngine.CoreModule
+      name: Shadows and light
+    second: {fileID: 2800000, guid: 1439bc0d279dc564b9cdf6748f27e145, type: 3}
   materials:
     materialImportMode: 2
     materialName: 0

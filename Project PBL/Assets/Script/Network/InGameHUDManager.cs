@@ -2,11 +2,19 @@ using System.Collections.Generic;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class InGameHUDManager : MonoBehaviour
 {
+    public static InGameHUDManager Instance { get; private set; }
+
     [Header("UI Canvas Panel")]
     [SerializeField] private GameObject hudPanel;
+
+
+    [Header("Sledding Cooldown UI")]
+    public GameObject sleddingCooldownBackground;
+    public Image sleddingCooldownFill;
 
     [Header("Timer Display")]
     [SerializeField] private TextMeshProUGUI timerText;
@@ -16,9 +24,22 @@ public class InGameHUDManager : MonoBehaviour
 
     private void Awake()
     {
+        Instance = this;
+
         if (hudPanel != null)
         {
             hudPanel.SetActive(false); // Sembunyikan HUD saat masih di Menu Lobby
+        }
+
+        CacheSleddingCooldownUI();
+        HideSleddingCooldown();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this)
+        {
+            Instance = null;
         }
     }
 
@@ -52,6 +73,44 @@ public class InGameHUDManager : MonoBehaviour
         int seconds = Mathf.FloorToInt(timeInSeconds % 60f);
 
         timerText.text = string.Format("Time: {0:00}:{1:00}", minutes, seconds);
+    }
+
+    public void SetSleddingCooldown(float progress)
+    {
+        CacheSleddingCooldownUI();
+        if (sleddingCooldownBackground != null)
+        {
+            sleddingCooldownBackground.SetActive(true);
+        }
+
+        if (sleddingCooldownFill != null)
+        {
+            sleddingCooldownFill.fillAmount = Mathf.Clamp01(progress);
+        }
+    }
+
+    public void HideSleddingCooldown()
+    {
+        CacheSleddingCooldownUI();
+        if (sleddingCooldownBackground != null)
+        {
+            sleddingCooldownBackground.SetActive(false);
+        }
+    }
+
+    private void CacheSleddingCooldownUI()
+    {
+        if (sleddingCooldownBackground != null || hudPanel == null) return;
+
+        Transform cooldownTransform = hudPanel.transform.Find("Sledding CD");
+        if (cooldownTransform == null) return;
+
+        sleddingCooldownBackground = cooldownTransform.gameObject;
+        Transform fillTransform = cooldownTransform.Find("image/Fill");
+        if (fillTransform != null)
+        {
+            sleddingCooldownFill = fillTransform.GetComponent<Image>();
+        }
     }
 
     private void UpdateScoreboardDisplay()

@@ -9,6 +9,7 @@ public class ObjectiveItem : NetworkBehaviour
     public NetworkVariable<bool> IsCarried = new NetworkVariable<bool>(false);
     public NetworkVariable<ulong> CarrierClientId = new NetworkVariable<ulong>(999);
     public NetworkVariable<bool> CanBePickedUp = new NetworkVariable<bool>(true);
+    public NetworkVariable<bool> HasTouchedGround = new NetworkVariable<bool>(false);
 
     [Header("Throw Settings")]
     [SerializeField] private float throwForceForward = 8f;
@@ -29,6 +30,20 @@ public class ObjectiveItem : NetworkBehaviour
         rb = GetComponent<Rigidbody>();
         col = GetComponent<Collider>();
         netObj = GetComponent<NetworkObject>();
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        HasTouchedGround.OnValueChanged += OnHasTouchedGroundChanged;
+        if (HasTouchedGround.Value)
+        {
+            DisableObjectiveLights();
+        }
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        HasTouchedGround.OnValueChanged -= OnHasTouchedGroundChanged;
     }
 
     [Header("Fall Respawn Settings")]
@@ -112,13 +127,18 @@ public class ObjectiveItem : NetworkBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (!IsServer || Time.time < droppedAt + 0.1f || collision.rigidbody != null)
+        if (!IsServer || collision.rigidbody != null || (waitingForLanding && Time.time < droppedAt + 0.1f))
             return;
 
         for (int i = 0; i < collision.contactCount; i++)
         {
             if (collision.GetContact(i).normal.y > 0.5f)
             {
+                if (!HasTouchedGround.Value)
+                {
+                    HasTouchedGround.Value = true;
+                }
+
                 if (!hasBouncedOnSpawn && rb != null)
                 {
                     rb.AddForce(Vector3.up * spawnBounceImpulse, ForceMode.Impulse);
@@ -145,6 +165,23 @@ public class ObjectiveItem : NetworkBehaviour
     }
 
     // --- CLIENT RPCS (VISUAL & LOCAL STATE) ---
+
+    private void OnHasTouchedGroundChanged(bool previousValue, bool newValue)
+    {
+        if (newValue)
+        {
+            DisableObjectiveLights();
+        }
+    }
+
+    private void DisableObjectiveLights()
+    {
+        Light[] objectiveLights = GetComponentsInChildren<Light>(true);
+        foreach (Light objectiveLight in objectiveLights)
+        {
+            objectiveLight.enabled = false;
+        }
+    }
 
     [ClientRpc]
     private void SetCarrierClientRpc(ulong playerNetworkObjectId)
