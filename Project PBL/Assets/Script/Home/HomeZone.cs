@@ -39,7 +39,6 @@ public class HomeZone : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        // Cek apakah objek yang menabrak adalah ObjectiveItem
         if (collision.gameObject.TryGetComponent<ObjectiveItem>(out var objective))
         {
             if (!objective.IsCarried.Value)
@@ -48,22 +47,22 @@ public class HomeZone : NetworkBehaviour
                 {
                     if (netObj != null && netObj.IsSpawned)
                     {
-                        Debug.Log($"<color=green>[GOAL!] Objective mengenai Rumah Player {zoneOwnerClientId}!</color>");
-                                                if (GameManager.Instance != null)
+                        Debug.Log($"<color=green>[GOAL!] Objective mengenai Rumah Player {ZoneOwnerClientId}!</color>");
+
+                        // 1. Tambah +10 Skor ke Pemilik Rumah lewat GameManager
+                        if (GameManager.Instance != null)
                         {
-                            GameManager.Instance.AddScore(zoneOwnerClientId, 10);
+                            GameManager.Instance.AddScore(ZoneOwnerClientId, 10);
                         }
 
+                        // 2. Despawn & Respawn bola baru di area
                         if (ObjectiveSpawner.Instance != null)
                         {
                             ObjectiveSpawner.Instance.DespawnAndRespawnNext(netObj);
                         }
-
-                        // GameManager.Instance.AddScore(zoneOwnerClientId, 10);
                     }
                 }
             }
         }
     }
-    
 }
