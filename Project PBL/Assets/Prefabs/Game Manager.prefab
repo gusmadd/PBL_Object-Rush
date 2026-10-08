@@ -73,7 +73,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::GameManager
   ShowTopMostFoldoutHeaderGroup: 1
-  matchDuration: 60
+  matchDuration: 180
   TimeRemaining:
     UpdateTraits:
       MinSecondsBetweenUpdates: 0
@@ -84,3 +84,5 @@ MonoBehaviour:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: 0
+  introCamera: {fileID: 0}
+  introAnimator: {fileID: 0}

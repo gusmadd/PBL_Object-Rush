@@ -16,28 +16,29 @@ public class PlayerCameraFollow : NetworkBehaviour
             enabled = false;
             return;
 
-        } 
+        }
         StartCoroutine(AttachCameraNextFrame());
     }
 
-   private IEnumerator AttachCameraNextFrame()
+    private IEnumerator AttachCameraNextFrame()
     {
         yield return null; // Tunggu 1 frame
 
-        CinemachineCamera freeLookCam = FindAnyObjectByType<CinemachineCamera>();
+        // CARI KAMERA SECARA SPESIFIK BERDASARKAN NAMA AGAR TIDAK TERTUKAR DENGAN INTRO CAM
+        GameObject camObj = GameObject.Find("PlayerCamera");
 
-        if (freeLookCam != null)
+        if (camObj != null && camObj.TryGetComponent<Unity.Cinemachine.CinemachineCamera>(out var freeLookCam))
         {
             Transform target = lookPointTarget != null ? lookPointTarget : transform;
 
             freeLookCam.Follow = target;
             freeLookCam.LookAt = target;
 
-            Debug.Log($"[Camera Success] Kamera di layar ini resmi mengunci Player ID: {OwnerClientId}");
+            Debug.Log($"[Camera Success] Kamera Player terkunci ke ID: {OwnerClientId}");
         }
         else
         {
-            Debug.LogError("[Camera Error] Tidak menemukan CinemachineCamera di Scene!");
+            Debug.LogError("[Camera Error] Tidak menemukan objek bernama 'PlayerCamera' di Scene!");
         }
     }
 }

@@ -11,7 +11,11 @@ public class PlayerSpawnManager : MonoBehaviour
     [Header("Daftar Lokasi Spawn Player")]
     [SerializeField] private List<Transform> spawnPoints = new List<Transform>();
 
-    private int currentSpawnIndex = 0;
+    // Menyimpan Index Spawn Point yang sedang dipakai oleh Client tertentu
+    private readonly Dictionary<ulong, int> clientSpawnIndices = new Dictionary<ulong, int>();
+    // Daftar Index Spawn Point yang masih nganggur/kosong
+    private List<int> availableSpawnIndices = new List<int>();
+
     private readonly Dictionary<ulong, Vector3> initialSpawnPositions = new Dictionary<ulong, Vector3>();
     private readonly HashSet<ulong> respawningClients = new HashSet<ulong>();
 
@@ -29,9 +33,17 @@ public class PlayerSpawnManager : MonoBehaviour
 
     private void Start()
     {
+        // Masukkan semua index titik spawn ke daftar "Tersedia" (0, 1, 2, 3...)
+        for (int i = 0; i < spawnPoints.Count; i++)
+        {
+            availableSpawnIndices.Add(i);
+        }
+
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+            // Tambahkan listener untuk menangkap event saat player keluar
+            NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
         }
     }
 
@@ -40,12 +52,12 @@ public class PlayerSpawnManager : MonoBehaviour
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
         }
     }
 
     private void OnClientConnected(ulong clientId)
     {
-        // Hanya eksekusi di Server/Host
         if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
 
         if (spawnPoints == null || spawnPoints.Count == 0)
@@ -54,9 +66,58 @@ public class PlayerSpawnManager : MonoBehaviour
             return;
         }
 
-        Vector3 spawnPosition = GetNextSpawnPosition();
+        Vector3 spawnPosition = AssignSpawnPosition(clientId);
         initialSpawnPositions[clientId] = spawnPosition;
         StartCoroutine(PlacePlayerWhenReady(clientId, spawnPosition));
+    }
+
+    private void OnClientDisconnected(ulong clientId)
+    {
+        if (!NetworkManager.Singleton.IsServer) return;
+
+        // Jika player yang keluar punya kursi/titik spawn, kembalikan kursinya menjadi "Tersedia"
+        if (clientSpawnIndices.TryGetValue(clientId, out int freedIndex))
+        {
+            availableSpawnIndices.Add(freedIndex);
+            availableSpawnIndices.Sort(); // Urutkan agar indeks terkecil diprioritaskan lagi
+
+            clientSpawnIndices.Remove(clientId);
+            initialSpawnPositions.Remove(clientId);
+
+            Debug.Log($"[PlayerSpawnManager] Player {clientId} keluar. Spawn Point {freedIndex} kembali kosong.");
+        }
+    }
+
+    private Vector3 AssignSpawnPosition(ulong clientId)
+    {
+        int assignedIndex = 0;
+
+        // Ambil dari kursi yang kosong jika ada
+        if (availableSpawnIndices.Count > 0)
+        {
+            assignedIndex = availableSpawnIndices[0];
+            availableSpawnIndices.RemoveAt(0); // Hapus dari daftar kosong
+        }
+        else
+        {
+            // Jika anehnya kepenuhan, fallback ke index acak/modulus
+            assignedIndex = (int)(clientId % (ulong)spawnPoints.Count);
+        }
+
+        // Catat kursi ini dipakai oleh siapa
+        clientSpawnIndices[clientId] = assignedIndex;
+
+        HomeZone[] allHomes = FindObjectsByType<HomeZone>(FindObjectsInactive.Exclude);
+        foreach (HomeZone home in allHomes)
+        {
+            if (home.homeIndex == assignedIndex) // Jika indeks rumah cocok dengan indeks kursi
+            {
+                home.ZoneOwnerClientId.Value = clientId;
+            }
+        }
+
+        // 4. Baris return HARUS ditaruh di paling bawah (Menyelesaikan Unreachable Code)
+        return spawnPoints[assignedIndex].position;
     }
 
     public void RespawnPlayer(ulong clientId)
@@ -120,8 +181,6 @@ public class PlayerSpawnManager : MonoBehaviour
         {
             ApplyTeleport(playerNetObj, spawnPosition, spawnRotation);
         }
-
-        Debug.Log($"[PlayerSpawnManager] Posisi spawn {spawnPosition} diproses untuk client {clientId}.");
     }
 
     private void ApplyTeleport(NetworkObject playerNetObj, Vector3 position, Quaternion rotation)
@@ -142,18 +201,5 @@ public class PlayerSpawnManager : MonoBehaviour
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
         }
-    }
-
-    public Vector3 GetNextSpawnPosition()
-    {
-        if (spawnPoints == null || spawnPoints.Count == 0)
-        {
-            return Vector3.zero;
-        }
-
-        Transform targetSpawn = spawnPoints[currentSpawnIndex % spawnPoints.Count];
-        currentSpawnIndex++;
-
-        return targetSpawn.position;
     }
 }

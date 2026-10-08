@@ -99,6 +99,7 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (!IsOwner || !Application.isFocused || Keyboard.current == null)
             return;
+        if (GameManager.Instance != null && GameManager.Instance.IsIntroPlaying) return;
         if (GameManager.Instance != null && GameManager.Instance.IsGameActive.Value)
         {
             // Saat Game Berjalan: Kunci kursor untuk mengontrol kamera
@@ -140,6 +141,7 @@ public class PlayerMovement : NetworkBehaviour
     {
         if (!IsOwner || !Application.isFocused)
             return;
+        if (GameManager.Instance != null && GameManager.Instance.IsIntroPlaying) return;
 
         CheckGrounded();
 

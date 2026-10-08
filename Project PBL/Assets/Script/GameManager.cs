@@ -13,6 +13,12 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<float> TimeRemaining = new NetworkVariable<float>(60f);
     public NetworkVariable<bool> IsGameActive = new NetworkVariable<bool>(false);
 
+    [Header("Cinemachine Intro")]
+    [SerializeField] private GameObject introCamera; // Masukkan IntroCamera dari scene ke sini
+    [SerializeField] private Animator introAnimator; // Durasi animasi intro dalam detik
+    // Status apakah intro sedang berjalan (agar player tidak bisa gerak dulu)
+    public bool IsIntroPlaying { get; private set; } = false;
+
     public Dictionary<ulong, int> PlayerScores { get; private set; } = new Dictionary<ulong, int>();
     private Dictionary<ulong, ulong> scoreOrder = new Dictionary<ulong, ulong>();
     private ulong nextScoreOrder;
@@ -25,6 +31,11 @@ public class GameManager : NetworkBehaviour
             return;
         }
         Instance = this;
+
+        if (introCamera != null)
+        {
+            introAnimator.enabled = false; // Pastikan IntroCamera mati saat awal
+        }
     }
 
     public override void OnNetworkSpawn()
@@ -56,23 +67,67 @@ public class GameManager : NetworkBehaviour
 
         IsGameActive.Value = true; // RESMI MULAI GAME
         TimeRemaining.Value = matchDuration;
-
-        // Spawn bola pertama di arena
-        if (ObjectiveSpawner.Instance != null)
-        {
-            ObjectiveSpawner.Instance.SpawnRandomObjective();
-        }
     }
 
     private void OnGameActiveChanged(bool previousValue, bool newValue)
     {
-        // Jika game diaktifkan, sembunyikan semua Panel Menu di layar player
         if (newValue == true)
         {
             if (NetworkUI.Instance != null)
             {
                 NetworkUI.Instance.HideAllPanels();
             }
+
+            // Jalankan transisi kamera
+            StartCoroutine(PlayIntroRoutine());
+        }
+    }
+
+    private System.Collections.IEnumerator PlayIntroRoutine()
+    {
+        IsIntroPlaying = true;
+
+        if (introCamera != null)
+        {
+            // 1. Nyalakan objek IntroCamera saat Start Game ditekan
+            introAnimator.enabled = true;
+
+            // 2. Pastikan komponen Animator-nya mereset ulang animasi ke awal
+            Animator anim = introCamera.GetComponent<Animator>();
+            if (anim != null)
+            {
+                anim.enabled = true;
+                anim.Play(0, -1, 0f); // Mulai animasi dari detik ke-0
+            }
+        }
+
+
+        // Sesuaikan durasi ini dengan panjang animasi intromu (misal: 3 detik)
+        yield return new WaitForSeconds(2.5f);
+
+        // Setelah selesai, matikan IntroCamera agar beralih ke kamera player
+        if (introCamera != null)
+        {
+            introCamera.SetActive(false);
+        }
+
+        yield return new WaitForSeconds(2f); // Tunggu sebentar sebelum countdown
+
+        if (NetworkUI.Instance != null)
+        {
+            // Karena total durasi countdown di atas sekitar 4.75 - 5 detik, kita sinkronkan di sini
+            NetworkUI.Instance.StartCoroutine(NetworkUI.Instance.PlayIntroCountdownRoutine());
+        }
+
+        // Tunggu hingga seluruh rangkaian hitungan mundur dan kamera selesai (misal total 5 detik)
+        yield return new WaitForSeconds(5.0f);
+
+        IsIntroPlaying = false; // Player sekarang bebas bergerak
+
+        if (NetworkManager.Singleton.IsServer && ObjectiveSpawner.Instance != null)
+        {
+            ObjectiveSpawner.Instance.SpawnRandomObjective();
+            Debug.Log("<color=green>[GameManager] Intro selesai, bola pertama resmi di-spawn!</color>");
         }
     }
 

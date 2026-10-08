@@ -1,6 +1,7 @@
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 public class PlayerMechanics : NetworkBehaviour
 {
@@ -8,16 +9,76 @@ public class PlayerMechanics : NetworkBehaviour
     [SerializeField] private float pickupRange = 3f;
     [SerializeField] private Transform carryPoint;
 
+    [Header("Pickup Indicator")]
+    [SerializeField] private GameObject pickupIndicator;
+    [SerializeField] private Image pickupIndicatorImage;
+    [SerializeField] private float pickupIndicatorBlinkSpeed = 4f;
+
+    private readonly Collider[] pickupCheckBuffer = new Collider[16];
+
     public Transform GetCarryPoint() => carryPoint;
+
+    private void Awake()
+    {
+        if (pickupIndicator != null)
+        {
+            pickupIndicator.SetActive(false);
+        }
+    }
 
     private void Update()
     {
         if (!IsOwner) return;
 
+        UpdatePickupIndicator();
+
         // Tekan 'E' untuk Ambil / Lempar Item
         if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
         {
             RequestToggleItemServerRpc();
+        }
+    }
+
+    private void UpdatePickupIndicator()
+    {
+        ObjectiveItem objective = ObjectiveItem.Instance;
+        bool canPickUp = objective != null
+            && !objective.IsCarried.Value
+            && objective.CanBePickedUp.Value;
+
+        if (canPickUp)
+        {
+            int hitCount = Physics.OverlapSphereNonAlloc(
+                transform.position,
+                pickupRange,
+                pickupCheckBuffer
+            );
+
+            canPickUp = false;
+            for (int i = 0; i < hitCount; i++)
+            {
+                Collider hit = pickupCheckBuffer[i];
+                if (hit != null
+                    && hit.TryGetComponent<ObjectiveItem>(out ObjectiveItem nearbyObjective)
+                    && nearbyObjective == objective
+                    && !nearbyObjective.IsCarried.Value
+                    && nearbyObjective.CanBePickedUp.Value)
+                {
+                    canPickUp = true;
+                    break;
+                }
+            }
+        }
+
+        if (pickupIndicator != null && pickupIndicator.activeSelf != canPickUp)
+        {
+            pickupIndicator.SetActive(canPickUp);
+        }
+
+        if (canPickUp && pickupIndicatorImage != null)
+        {
+            float blink = (Mathf.Sin(Time.time * pickupIndicatorBlinkSpeed) + 1f) * 0.5f;
+            pickupIndicatorImage.color = Color.Lerp(Color.green, Color.white, blink);
         }
     }
 

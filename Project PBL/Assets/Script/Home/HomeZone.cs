@@ -1,21 +1,24 @@
 using Unity.Netcode;
 using UnityEngine;
+using System.Collections;
 
 public class HomeZone : NetworkBehaviour
 {
     [Header("Home Zone Settings")]
-    [Tooltip("ID Pemilik Rumah ini (0 untuk Player 1/Host, 1 untuk Player 2, dst)")]
-    [SerializeField] private ulong zoneOwnerClientId = 0;
+    [Tooltip("Indeks Kursi Rumah Ini (Misal: 0 untuk Rumah Pertama, 1 untuk Kedua)")]
+    public int homeIndex = 0;
+
+    // Pakai NetworkVariable agar kepemilikan rumah bisa di-update jika ada player yang reconnect (ID berubah)
+    public NetworkVariable<ulong> ZoneOwnerClientId = new NetworkVariable<ulong>(999);
 
     [Header("Local Visual Effect")]
     [Tooltip("Komponen Light yang dipasang di dalam Home (Spotlight / Point Light)")]
     [SerializeField] private GameObject homeLight;
 
-    public ulong ZoneOwnerClientId => zoneOwnerClientId;
+    private bool isProcessingGoal = false; // Kunci anti-dobel skor
 
     private void Awake()
     {
-        // Pastikan lampu mati terlebih dahulu saat game baru start
         if (homeLight != null)
         {
             homeLight.SetActive(false);
@@ -24,20 +27,45 @@ public class HomeZone : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        // Cek apakah ID Client lokal di PC ini sama dengan ID pemilik rumah ini
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClientId == zoneOwnerClientId)
+        // Pasang pendengar: Jika server mengubah pemilik rumah ini, jalankan fungsi UpdateLight
+        ZoneOwnerClientId.OnValueChanged += OnOwnerChanged;
+
+        // Setel lampu saat pertama kali spawn
+        UpdateLightEffect(ZoneOwnerClientId.Value);
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        ZoneOwnerClientId.OnValueChanged -= OnOwnerChanged;
+    }
+
+    private void OnOwnerChanged(ulong previousOwner, ulong newOwner)
+    {
+        UpdateLightEffect(newOwner);
+    }
+
+    private void UpdateLightEffect(ulong currentOwnerId)
+    {
+        // Nyalakan lampu HANYA jika ID Client di layar PC ini sama dengan Pemilik Rumah saat ini
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.LocalClientId == currentOwnerId)
         {
-            if (homeLight != null)
-            {
-                homeLight.SetActive(true); // Nyalakan cahaya KHUSUS untuk pemilik rumah di PC ini
-                Debug.Log($"<color=yellow>[HomeZone] Efek cahaya dinyalakan untuk Rumah Player {zoneOwnerClientId}!</color>");
-            }
+            if (homeLight != null) homeLight.SetActive(true);
+            Debug.Log($"<color=yellow>[HomeZone] Efek cahaya dinyalakan untuk Rumah {homeIndex} (Pemilik: ID {currentOwnerId})!</color>");
+        }
+        else
+        {
+            if (homeLight != null) homeLight.SetActive(false);
         }
     }
 
+    // FUNGSI PENGAMAN GOAL (PHYSICS)
     private void OnCollisionEnter(Collision collision)
     {
-        if (!IsServer) return;
+        // Jika server sedang memproses goal, abaikan tumbukan tambahan (Anti-Double Score)
+        if (!IsServer || isProcessingGoal) return;
+
+        // Abaikan jika rumah ini belum punya majikan (ID 999)
+        if (ZoneOwnerClientId.Value == 999) return;
 
         if (collision.gameObject.TryGetComponent<ObjectiveItem>(out var objective))
         {
@@ -47,22 +75,31 @@ public class HomeZone : NetworkBehaviour
                 {
                     if (netObj != null && netObj.IsSpawned)
                     {
-                        Debug.Log($"<color=green>[GOAL!] Objective mengenai Rumah Player {ZoneOwnerClientId}!</color>");
-
-                        // 1. Tambah +10 Skor ke Pemilik Rumah lewat GameManager
-                        if (GameManager.Instance != null)
-                        {
-                            GameManager.Instance.AddScore(ZoneOwnerClientId, 10);
-                        }
-
-                        // 2. Despawn & Respawn bola baru di area
-                        if (ObjectiveSpawner.Instance != null)
-                        {
-                            ObjectiveSpawner.Instance.DespawnAndRespawnNext(netObj);
-                        }
+                        StartCoroutine(ProcessGoalRoutine(netObj));
                     }
                 }
             }
         }
+    }
+
+    private IEnumerator ProcessGoalRoutine(NetworkObject ballNetObj)
+    {
+        isProcessingGoal = true; // Kunci gawang
+
+        Debug.Log($"<color=green>[GOAL!] Bola masuk ke Rumah {homeIndex} (Milik Player ID {ZoneOwnerClientId.Value})!</color>");
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddScore(ZoneOwnerClientId.Value, 10);
+        }
+
+        if (ObjectiveSpawner.Instance != null)
+        {
+            ObjectiveSpawner.Instance.DespawnAndRespawnNext(ballNetObj);
+        }
+
+        // Tunggu 0.5 detik baru gawang bisa nerima bola lagi (agar sangat aman)
+        yield return new WaitForSeconds(0.5f);
+        isProcessingGoal = false;
     }
 }

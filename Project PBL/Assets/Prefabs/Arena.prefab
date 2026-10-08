@@ -1313,7 +1313,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HomeZone
   ShowTopMostFoldoutHeaderGroup: 1
-  zoneOwnerClientId: 1
+  homeIndex: 1
+  ZoneOwnerClientId:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 999
   homeLight: {fileID: 5321681297707587806}
 --- !u!114 &677851452330112494
 MonoBehaviour:
@@ -1436,6 +1441,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c6cde25011a84394ba92b865f7899922, type: 3}
       insertIndex: -1
       addedObject: {fileID: 9222405606543181939}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c6cde25011a84394ba92b865f7899922, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8559854111933722737}
   m_SourcePrefab: {fileID: 100100000, guid: c6cde25011a84394ba92b865f7899922, type: 3}
 --- !u!4 &5018839823542559891 stripped
 Transform:
@@ -1482,8 +1490,40 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HomeZone
   ShowTopMostFoldoutHeaderGroup: 1
-  zoneOwnerClientId: 3
+  homeIndex: 3
+  ZoneOwnerClientId:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 999
   homeLight: {fileID: 7518832990367537354}
+--- !u!114 &8559854111933722737
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5687290510023523881}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 3230605538
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1001 &6568334771912681418
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1681,6 +1721,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c6cde25011a84394ba92b865f7899922, type: 3}
       insertIndex: -1
       addedObject: {fileID: 3397272611299332910}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: c6cde25011a84394ba92b865f7899922, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5293434287731248489}
   m_SourcePrefab: {fileID: 100100000, guid: c6cde25011a84394ba92b865f7899922, type: 3}
 --- !u!4 &8572852129888962449 stripped
 Transform:
@@ -1727,8 +1770,40 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HomeZone
   ShowTopMostFoldoutHeaderGroup: 1
-  zoneOwnerClientId: 2
+  homeIndex: 2
+  ZoneOwnerClientId:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 999
   homeLight: {fileID: 4293056361196611743}
+--- !u!114 &5293434287731248489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9057639607344815403}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
+  GlobalObjectIdHash: 2665007848
+  InScenePlacedSourceGlobalObjectIdHash: 0
+  m_InScenePlacedDisabledByDefault: 0
+  DeferredDespawnTick: 0
+  Ownership: 1
+  AlwaysReplicateAsRoot: 0
+  SynchronizeTransform: 1
+  m_InScenePlaced: 1
+  ActiveSceneSynchronization: 0
+  SceneMigrationSynchronization: 0
+  SpawnWithObservers: 1
+  DontDestroyWithOwner: 0
+  AutoObjectParentSync: 1
+  SyncOwnerTransformWhenParented: 1
+  AllowOwnerToParent: 0
 --- !u!1001 &8355593206931752696
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1894,5 +1969,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HomeZone
   ShowTopMostFoldoutHeaderGroup: 1
-  zoneOwnerClientId: 0
+  homeIndex: 0
+  ZoneOwnerClientId:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 999
   homeLight: {fileID: 5740205017093241223}

@@ -1,10 +1,16 @@
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public class PlayerSledding : NetworkBehaviour
 {
+    private readonly NetworkVariable<bool> isSleddingNetworked = new(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Owner);
+
     [Header("Hitbox Reference")]
     public Collider hitbox;
 
@@ -28,6 +34,11 @@ public class PlayerSledding : NetworkBehaviour
     private bool canSlide = true;
     private bool isBeingTackled = false;
     private Quaternion originalModelRotation;
+
+    public bool IsSledding => isSleddingNetworked.Value;
+
+    // Menyimpan daftar korban yang sudah ditabrak dalam 1 kali tarikan sledding
+    private HashSet<ulong> hitClients = new HashSet<ulong>();
 
     private void Awake()
     {
@@ -54,10 +65,10 @@ public class PlayerSledding : NetworkBehaviour
         {
             if (canSlide && !isSledding && !IsCarryingObjective() && movement != null && movement.IsGrounded)
             {
-                // 1. LOKAL PREDICTION: Langsung jalankan sledding di layar sendiri tanpa nunggu server
+                // 1. Langsung jalankan gerakan sledding dan nyalakan hitbox di layar sendiri (Client-Side)
                 StartCoroutine(SleddingRoutineLocal(transform.forward));
 
-                // 2. Beritahu Server untuk menjalankan logika bentrokan/tackle
+                // 2. Lapor ke Server untuk memunculkan efek visual/partikel ke player lain
                 RequestSleddingServerRpc(transform.forward);
             }
         }
@@ -69,18 +80,23 @@ public class PlayerSledding : NetworkBehaviour
         return objective != null && objective.IsCarried.Value && objective.CarrierClientId.Value == OwnerClientId;
     }
 
-    // --- COROUTINE SLEDDING LOKAL (RESPONSIF) ---
+    // --- COROUTINE SLEDDING LOKAL (RESPONSIF & HITBOX AKTIF) ---
 
     private IEnumerator SleddingRoutineLocal(Vector3 direction)
     {
         isSledding = true;
         canSlide = false;
+        hitClients.Clear(); // Bersihkan daftar korban
+
+        // NYALAKAN HITBOX DI LOKAL AGAR BISA MENDETEKSI TABRAKAN SECARA INSTAN
+        if (hitbox != null) hitbox.enabled = true;
+
         SetSleddingParticles(true);
         StartCoroutine(IgnoreObjectiveCollisionsForSlide());
         StartCoroutine(IgnorePlayerCollisionsForSlide());
 
-        if (movement != null) movement.IsSledding = true;
-        if (visualModel != null) visualModel.localRotation = Quaternion.Euler(0f, -90f, 60f);
+        SetSleddingState(true);
+        if (visualModel != null) visualModel.localRotation = GetSleddingModelRotation();
 
         float timer = 0f;
         while (timer < slideDuration)
@@ -90,14 +106,16 @@ public class PlayerSledding : NetworkBehaviour
             yield return null;
         }
 
-        if (movement != null) movement.IsSledding = false;
+        SetSleddingState(false);
         if (visualModel != null) visualModel.localRotation = originalModelRotation;
+
+        // MATIKAN HITBOX DI LOKAL SETELAH SELESAI SLEDDING
+        if (hitbox != null) hitbox.enabled = false;
 
         SetSleddingParticles(false);
         isSledding = false;
 
         InGameHUDManager.Instance?.SetSleddingCooldown(0f);
-
         float cooldownTimer = 0f;
         while (cooldownTimer < slideCooldown)
         {
@@ -110,7 +128,7 @@ public class PlayerSledding : NetworkBehaviour
         canSlide = true;
     }
 
-    // --- SERVER RPC (LOGIKA TACKLE & HITBOX SERVER) ---
+    // --- SERVER RPC (VISUAL SYNC) ---
 
     [ServerRpc]
     private void RequestSleddingServerRpc(Vector3 direction)
@@ -121,18 +139,12 @@ public class PlayerSledding : NetworkBehaviour
 
     private IEnumerator SleddingRoutineServer(Vector3 direction)
     {
-        // 1. Nyalakan hitbox tackle di server untuk cek tabrakan
-        if (hitbox != null) hitbox.enabled = true;
-
-        // 2. Kunci: JANGAN ubah rb.linearVelocity di Server jika ini bukan Owner!
-        // Gerakan fisik sudah ditangani dengan mulus oleh SleddingRoutineLocal di layar Owner,
-        // lalu posisinya disinkronkan ke server via NetworkTransform.
+        // Server hanya mengatur durasi tayang visual, hitbox fisik tidak perlu diurus server lagi
         yield return new WaitForSeconds(slideDuration);
-
-        // 3. Matikan hitbox setelah durasi slide selesai
-        if (hitbox != null) hitbox.enabled = false;
         ToggleSleddingVisualClientRpc(false);
     }
+
+    // --- MANAJEMEN KOLISI (IGNORE) ---
 
     private IEnumerator IgnoreObjectiveCollisionsForSlide()
     {
@@ -175,8 +187,8 @@ public class PlayerSledding : NetworkBehaviour
     private IEnumerator IgnorePlayerCollisionsForSlide()
     {
         Collider[] playerColliders = GetComponentsInChildren<Collider>();
-        PlayerSledding[] otherPlayers = FindObjectsByType<PlayerSledding>();
-        var ignoredCollisions = new System.Collections.Generic.List<(Collider, Collider)>();
+        PlayerSledding[] otherPlayers = FindObjectsByType<PlayerSledding>(FindObjectsInactive.Exclude);
+        var ignoredCollisions = new List<(Collider, Collider)>();
 
         foreach (PlayerSledding otherPlayer in otherPlayers)
         {
@@ -207,40 +219,60 @@ public class PlayerSledding : NetworkBehaviour
         }
     }
 
+    // --- CLIENT-SIDE HIT DETECTION ---
+
     private void OnTriggerEnter(Collider other)
     {
-        if (!IsServer) return;
+        // 1. HANYA CEK TABRAKAN JIKA INI PLAYER KITA SENDIRI & SEDANG SLEDDING
+        if (!IsOwner || !isSledding) return;
 
         if (other.TryGetComponent<NetworkObject>(out var targetNetObj))
         {
-            // 1. Abaikan jika menabrak diri sendiri
+            // Abaikan jika menabrak diri sendiri
             if (targetNetObj.OwnerClientId == OwnerClientId) return;
 
-            PlayerSledding targetSledding = targetNetObj.GetComponent<PlayerSledding>();
-            if (targetSledding != null)
-            {
-                targetSledding.ApplyTackleEffect(transform.forward);
-            }
+            // Pastikan korban ini belum ditabrak di 1 tarikan sledding yang sama
+            if (!hitClients.Add(targetNetObj.OwnerClientId)) return;
 
-            // --- EFEK DROP OBJECTIVE (HANYA JIKA TARGET SEDANG MEMBAWA BOLA) ---
-            ObjectiveItem objective = ObjectiveItem.Instance;
-
-            if (objective != null && objective.IsCarried.Value && objective.CarrierClientId.Value == targetNetObj.OwnerClientId)
-            {
-                // Arah lemparan bola: Ke depan + Ke atas agar terlihat melayang indah saat terlepas
-                Vector3 objectiveDirection = transform.forward * 0.8f + Vector3.up * 0.6f;
-
-                // Menaikkan multiplier ke 0.5f agar lontaran bola terasa pas (tidak terlalu jauh, tidak terlalu lembek)
-                objective.Drop(objectiveDirection, true, 0.5f);
-
-                Debug.Log($"[Sledding Tackle Hit!] Player {OwnerClientId} menackle Player {targetNetObj.OwnerClientId} & Objective terlepas!");
-            }
-            else
-            {
-                Debug.Log($"[Sledding Tackle Hit!] Player {OwnerClientId} menackle Player {targetNetObj.OwnerClientId} (Tanpa Objective)!");
-            }
+            // 2. LAPOR KE SERVER BAHWA KITA BERHASIL MENABRAK PLAYER INI!
+            NotifyTackleHitServerRpc(targetNetObj.OwnerClientId, transform.forward);
         }
     }
+
+    // --- SERVER RPC (EKSEKUSI JATUH & BOLA LEPAS) ---
+
+    [ServerRpc]
+    private void NotifyTackleHitServerRpc(ulong targetClientId, Vector3 tackleDirection)
+    {
+        // 3. SERVER MENERIMA LAPORAN, LALU MEMBUAT KORBAN JATUH DAN BOLA TERLEPAS
+
+        var targetNetObj = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(targetClientId);
+        if (targetNetObj == null) return;
+
+        // A. Terapkan efek mental/jatuh ke korban
+        PlayerSledding targetSledding = targetNetObj.GetComponent<PlayerSledding>();
+        if (targetSledding != null)
+        {
+            targetSledding.ApplyTackleEffect(tackleDirection);
+        }
+
+        // B. Cek apakah korban sedang membawa bola
+        ObjectiveItem objective = ObjectiveItem.Instance;
+        if (objective != null && objective.IsCarried.Value && objective.CarrierClientId.Value == targetClientId)
+        {
+            // Bola terlempar serong ke atas
+            Vector3 objectiveDirection = tackleDirection * 0.8f + Vector3.up * 0.6f;
+            objective.Drop(objectiveDirection, true, 0.5f);
+
+            Debug.Log($"<color=orange>[Sledding Hit!] Player {OwnerClientId} menabrak Player {targetClientId} & Objective terlepas!</color>");
+        }
+        else
+        {
+            Debug.Log($"<color=orange>[Sledding Hit!] Player {OwnerClientId} menabrak Player {targetClientId} (Tanpa Objective)!</color>");
+        }
+    }
+
+    // --- LOGIKA MENTAL / JATUH ---
 
     public void ApplyTackleEffect(Vector3 direction)
     {
@@ -253,10 +285,7 @@ public class PlayerSledding : NetworkBehaviour
         {
             var clientRpcParams = new ClientRpcParams
             {
-                Send = new ClientRpcSendParams
-                {
-                    TargetClientIds = new[] { OwnerClientId }
-                }
+                Send = new ClientRpcSendParams { TargetClientIds = new[] { OwnerClientId } }
             };
             ApplyTackleEffectClientRpc(direction, clientRpcParams);
         }
@@ -274,7 +303,7 @@ public class PlayerSledding : NetworkBehaviour
     private IEnumerator TackleEffectRoutine(Vector3 direction)
     {
         RigidbodyConstraints originalConstraints = rb.constraints;
-        if (movement != null) movement.IsSledding = true;
+        SetSleddingState(true);
 
         rb.constraints &= ~(RigidbodyConstraints.FreezeRotationX |
                             RigidbodyConstraints.FreezeRotationY |
@@ -288,12 +317,27 @@ public class PlayerSledding : NetworkBehaviour
         yield return new WaitForSeconds(tackleEffectDuration);
 
         float yaw = rb.rotation.eulerAngles.y;
-//        rb.angularVelocity = Vector3.zero;
         rb.rotation = Quaternion.Euler(0f, yaw, 0f);
         rb.constraints = originalConstraints;
 
-        if (movement != null) movement.IsSledding = false;
+        SetSleddingState(false);
         isBeingTackled = false;
+    }
+
+    // --- VISUAL RPC ---
+
+    private void SetSleddingState(bool active)
+    {
+        if (movement != null) movement.IsSledding = active;
+        if (IsOwner && IsSpawned)
+        {
+            isSleddingNetworked.Value = active;
+        }
+    }
+
+    private static Quaternion GetSleddingModelRotation()
+    {
+        return Quaternion.Euler(0f, -90f, 60f);
     }
 
     [ClientRpc]
@@ -301,11 +345,10 @@ public class PlayerSledding : NetworkBehaviour
     {
         SetSleddingParticles(active);
 
-        // Untuk player lain yang melihat (Non-Owner), sesuaikan rotasi visualnya
         if (!IsOwner && visualModel != null)
         {
             if (movement != null) movement.IsSledding = active;
-            visualModel.localRotation = active ? Quaternion.Euler(-60f, 0f, 90f) : originalModelRotation;
+            visualModel.localRotation = active ? GetSleddingModelRotation() : originalModelRotation;
         }
     }
 
