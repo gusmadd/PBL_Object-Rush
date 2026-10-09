@@ -8,6 +8,7 @@ public class PlayerMovement : NetworkBehaviour
 {
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 6f;
+    [SerializeField] private float moveSpeedWhileCarryingObjective = 4f;
     [SerializeField] private float rotationSpeed = 12f;
     [SerializeField] private ParticleSystem runningParticles;
 
@@ -58,6 +59,18 @@ public class PlayerMovement : NetworkBehaviour
         }
 
         Debug.Log($"[PlayerMovement] Owner {OwnerClientId} selesai teleport ke {transform.position}.");
+    }
+
+    [ClientRpc]
+    public void ResetOwnerCameraAfterRespawnClientRpc(ClientRpcParams clientRpcParams = default)
+    {
+        if (!IsOwner) return;
+
+        PlayerCameraFollow cameraFollow = GetComponent<PlayerCameraFollow>();
+        if (cameraFollow != null)
+        {
+            cameraFollow.ResetCameraBehindPlayer();
+        }
     }
 
     public override void OnNetworkSpawn()
@@ -213,12 +226,23 @@ public class PlayerMovement : NetworkBehaviour
         Vector3 moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
 
         // Gunakan FixedUpdate agar pergerakan Rigidbody lebih stabil dan tidak geter seperti Update.
-        Vector3 targetVelocity = moveDirection * moveSpeed;
+        float currentMoveSpeed = IsCarryingObjective()
+            ? moveSpeedWhileCarryingObjective
+            : moveSpeed;
+        Vector3 targetVelocity = moveDirection * currentMoveSpeed;
         rb.linearVelocity = new Vector3(targetVelocity.x, rb.linearVelocity.y, targetVelocity.z);
 
         Quaternion targetRotation = Quaternion.Euler(0f, targetAngle, 0f);
         rb.MoveRotation(Quaternion.Slerp(rb.rotation, targetRotation, Time.fixedDeltaTime * rotationSpeed));
         rb.angularVelocity = Vector3.zero;
+    }
+
+    private bool IsCarryingObjective()
+    {
+        ObjectiveItem objective = ObjectiveItem.Instance;
+        return objective != null
+            && objective.IsCarried.Value
+            && objective.CarrierClientId.Value == OwnerClientId;
     }
 
     private void HandleJumpInput()

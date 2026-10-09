@@ -156,31 +156,55 @@ public class PlayerSpawnManager : MonoBehaviour
             yield break;
         }
 
-        Quaternion spawnRotation = Quaternion.identity;
+        Quaternion spawnRotation = GetSpawnRotation(spawnPosition, clientId);
+        PlayerMovement playerMovement = playerNetObj.GetComponent<PlayerMovement>();
+        if (playerMovement == null)
+        {
+            Debug.LogError($"[PlayerSpawnManager] PlayerMovement untuk client {clientId} tidak ditemukan.");
+            yield break;
+        }
+
+        ClientRpcParams clientRpcParams = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams
+            {
+                TargetClientIds = new[] { clientId }
+            }
+        };
 
         if (playerNetObj.TryGetComponent<NetworkTransform>(out var netTransform) && !netTransform.CanCommitToTransform)
         {
-            PlayerMovement playerMovement = playerNetObj.GetComponent<PlayerMovement>();
-            if (playerMovement == null)
-            {
-                Debug.LogError($"[PlayerSpawnManager] PlayerMovement untuk client {clientId} tidak ditemukan.");
-                yield break;
-            }
-
-            ClientRpcParams clientRpcParams = new ClientRpcParams
-            {
-                Send = new ClientRpcSendParams
-                {
-                    TargetClientIds = new[] { clientId }
-                }
-            };
-
             playerMovement.TeleportOwnerClientRpc(spawnPosition, spawnRotation, clientRpcParams);
         }
         else
         {
             ApplyTeleport(playerNetObj, spawnPosition, spawnRotation);
         }
+
+        playerMovement.ResetOwnerCameraAfterRespawnClientRpc(clientRpcParams);
+    }
+
+    private Quaternion GetSpawnRotation(Vector3 spawnPosition, ulong clientId)
+    {
+        Vector3 centerPosition = ObjectiveSpawner.Instance != null
+            ? ObjectiveSpawner.Instance.CenterPoint
+            : Vector3.zero;
+
+        Vector3 direction = centerPosition - spawnPosition;
+        direction.y = 0f;
+
+        if (direction.sqrMagnitude < 0.001f
+            && clientSpawnIndices.TryGetValue(clientId, out int spawnIndex)
+            && spawnIndex < spawnPoints.Count
+            && spawnPoints[spawnIndex] != null)
+        {
+            direction = spawnPoints[spawnIndex].forward;
+            direction.y = 0f;
+        }
+
+        return direction.sqrMagnitude >= 0.001f
+            ? Quaternion.LookRotation(direction, Vector3.up)
+            : Quaternion.identity;
     }
 
     private void ApplyTeleport(NetworkObject playerNetObj, Vector3 position, Quaternion rotation)

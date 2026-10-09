@@ -31,11 +31,13 @@ public class PlayerSledding : NetworkBehaviour
     private Transform visualModel;
 
     private bool isSledding = false;
+    private bool isSleddingOnServer;
     private bool canSlide = true;
     private bool isBeingTackled = false;
     private Quaternion originalModelRotation;
 
-    public bool IsSledding => isSleddingNetworked.Value;
+    public bool IsSledding => isSledding || isSleddingOnServer || isSleddingNetworked.Value;
+    public bool IsBeingTackled => isBeingTackled;
 
     // Menyimpan daftar korban yang sudah ditabrak dalam 1 kali tarikan sledding
     private HashSet<ulong> hitClients = new HashSet<ulong>();
@@ -133,6 +135,7 @@ public class PlayerSledding : NetworkBehaviour
     [ServerRpc]
     private void RequestSleddingServerRpc(Vector3 direction)
     {
+        isSleddingOnServer = true;
         StartCoroutine(SleddingRoutineServer(direction));
         ToggleSleddingVisualClientRpc(true);
     }
@@ -141,6 +144,7 @@ public class PlayerSledding : NetworkBehaviour
     {
         // Server hanya mengatur durasi tayang visual, hitbox fisik tidak perlu diurus server lagi
         yield return new WaitForSeconds(slideDuration);
+        isSleddingOnServer = false;
         ToggleSleddingVisualClientRpc(false);
     }
 

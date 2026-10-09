@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7895427926664762354}
   - component: {fileID: 5571804722803100433}
   - component: {fileID: 8186377471772110112}
-  m_Layer: 0
+  m_Layer: 8
   m_Name: Spot Light
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -26,12 +26,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 9121093467696073687}
   serializedVersion: 2
-  m_LocalRotation: {x: 1, y: -0, z: -0, w: 0}
-  m_LocalPosition: {x: 0.0000038146973, y: 0.000015258789, z: 173.85896}
+  m_LocalRotation: {x: 0.7071067, y: -0, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 8920034725163974745}
+  m_Father: {fileID: 3375388533528601923}
   m_LocalEulerAnglesHint: {x: 180, y: 0, z: 0}
 --- !u!108 &5571804722803100433
 Light:
@@ -191,6 +191,10 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: -5117700066308340382, guid: b34af1a798aa9424a8c5111e6c365c32, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     - target: {fileID: -3272106112100924687, guid: b34af1a798aa9424a8c5111e6c365c32, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -215,12 +219,16 @@ PrefabInstance:
       propertyPath: m_Name
       value: Ball
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: b34af1a798aa9424a8c5111e6c365c32, type: 3}
+      propertyPath: m_Layer
+      value: 8
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 65702495048144492, guid: b34af1a798aa9424a8c5111e6c365c32, type: 3}
     - {fileID: -8700617353114198275, guid: b34af1a798aa9424a8c5111e6c365c32, type: 3}
     m_AddedGameObjects:
-    - targetCorrespondingSourceObject: {fileID: -3272106112100924687, guid: b34af1a798aa9424a8c5111e6c365c32, type: 3}
+    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: b34af1a798aa9424a8c5111e6c365c32, type: 3}
       insertIndex: -1
       addedObject: {fileID: 7895427926664762354}
     m_AddedComponents:
@@ -326,8 +334,13 @@ MonoBehaviour:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: 1
-  throwForceForward: 10
-  throwForceUp: 6
+  HasTouchedGround:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
+  throwForceForward: 9
+  throwForceUp: 4
   spawnBounceImpulse: 6
   fallYThreshold: -5
 --- !u!54 &831282885764630141
@@ -441,8 +454,8 @@ MonoBehaviour:
   UseRigidBodyForMotion: 0
   AutoUpdateKinematicState: 1
   AutoSetKinematicOnDespawn: 1
---- !u!4 &8920034725163974745 stripped
+--- !u!4 &3375388533528601923 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: -3272106112100924687, guid: b34af1a798aa9424a8c5111e6c365c32, type: 3}
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: b34af1a798aa9424a8c5111e6c365c32, type: 3}
   m_PrefabInstance: {fileID: 2980662230583558824}
   m_PrefabAsset: {fileID: 0}

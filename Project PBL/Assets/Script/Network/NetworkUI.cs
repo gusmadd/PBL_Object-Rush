@@ -215,7 +215,7 @@ public class NetworkUI : MonoBehaviour
             // 1. Buat Kunci Acak (1 - 254) setiap kali Host bikin Room
             byte randomKey = (byte)UnityEngine.Random.Range(1, 255);
 
-            byte[] encodedBytes = new byte[5];
+            byte[] encodedBytes = new byte[6];
 
             // 2. Acak IP menggunakan Kunci Acak tersebut (XOR Encryption)
             for (int i = 0; i < 4; i++)
@@ -226,7 +226,9 @@ public class NetworkUI : MonoBehaviour
             // 3. Sisipkan kunci acaknya di urutan paling belakang
             encodedBytes[4] = randomKey;
 
-            // Hasilnya akan selalu menjadi 10 Karakter acak yang berubah-ubah
+            encodedBytes[5] = CalculateRoomCodeChecksum(encodedBytes, 5);
+
+            // Hasilnya 12 karakter: 10 karakter data dan 2 karakter checksum.
             return System.BitConverter.ToString(encodedBytes).Replace("-", "");
         }
         catch { return "ERROR"; }
@@ -236,14 +238,16 @@ public class NetworkUI : MonoBehaviour
     {
         try
         {
-            // Jika kurang/lebih dari 10 karakter, langsung tolak
-            if (code.Length != 10) return null;
+            // Jika kurang/lebih dari 12 karakter, langsung tolak
+            if (code.Length != 12) return null;
 
-            byte[] bytes = new byte[5];
-            for (int i = 0; i < 5; i++)
+            byte[] bytes = new byte[6];
+            for (int i = 0; i < bytes.Length; i++)
             {
                 bytes[i] = System.Convert.ToByte(code.Substring(i * 2, 2), 16);
             }
+
+            if (bytes[5] != CalculateRoomCodeChecksum(bytes, 5)) return null;
 
             byte key = bytes[4];
             byte[] decodedIpBytes = new byte[4];
@@ -256,6 +260,23 @@ public class NetworkUI : MonoBehaviour
             return new IPAddress(decodedIpBytes).ToString();
         }
         catch { return null; } // Jika kodenya bukan angka/huruf yang valid, tolak
+    }
+
+    private static byte CalculateRoomCodeChecksum(byte[] bytes, int length)
+    {
+        byte checksum = 0;
+        for (int i = 0; i < length; i++)
+        {
+            checksum ^= bytes[i];
+            for (int bit = 0; bit < 8; bit++)
+            {
+                checksum = (byte)((checksum & 0x80) != 0
+                    ? (checksum << 1) ^ 0x07
+                    : checksum << 1);
+            }
+        }
+
+        return checksum;
     }
 
     // ==========================================
@@ -475,6 +496,11 @@ public class NetworkUI : MonoBehaviour
         // Matikan semua gambar aba-aba di awal
         SetAllIntroImages(false);
 
+        // 5. Tampilkan teks "READY"
+        if (readyImage != null) readyImage.SetActive(true);
+        yield return new WaitForSeconds(1.5f);
+        if (readyImage != null) readyImage.SetActive(false);
+
         // 2. Tampilkan angka "3" (3 detik)
         if (thirdTimeImage != null) thirdTimeImage.SetActive(true);
         yield return new WaitForSeconds(1f);
@@ -490,14 +516,9 @@ public class NetworkUI : MonoBehaviour
         yield return new WaitForSeconds(1f);
         if (firstTimeImage != null) firstTimeImage.SetActive(false);
 
-        // 5. Tampilkan teks "READY"
-        if (readyImage != null) readyImage.SetActive(true);
-        yield return new WaitForSeconds(1f);
-        if (readyImage != null) readyImage.SetActive(false);
-
         // 6. Tampilkan teks "GO!"
         if (goImage != null) goImage.SetActive(true);
-        yield return new WaitForSeconds(0.75f);
+        yield return new WaitForSeconds(1f);
         if (goImage != null) goImage.SetActive(false);
 
         // 7. Matikan Panel Intro sepenuhnya agar permainan dimulai
