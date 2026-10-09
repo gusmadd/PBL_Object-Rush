@@ -73,7 +73,7 @@ public class PlayerSpawnManager : MonoBehaviour
 
     private void OnClientDisconnected(ulong clientId)
     {
-        if (!NetworkManager.Singleton.IsServer) return;
+        if (NetworkManager.Singleton == null || !NetworkManager.Singleton.IsServer) return;
 
         // Jika player yang keluar punya kursi/titik spawn, kembalikan kursinya menjadi "Tersedia"
         if (clientSpawnIndices.TryGetValue(clientId, out int freedIndex))
@@ -86,6 +86,8 @@ public class PlayerSpawnManager : MonoBehaviour
 
             Debug.Log($"[PlayerSpawnManager] Player {clientId} keluar. Spawn Point {freedIndex} kembali kosong.");
         }
+
+        RefreshHomeAvailability();
     }
 
     private Vector3 AssignSpawnPosition(ulong clientId)
@@ -107,17 +109,33 @@ public class PlayerSpawnManager : MonoBehaviour
         // Catat kursi ini dipakai oleh siapa
         clientSpawnIndices[clientId] = assignedIndex;
 
-        HomeZone[] allHomes = FindObjectsByType<HomeZone>(FindObjectsInactive.Exclude);
-        foreach (HomeZone home in allHomes)
-        {
-            if (home.homeIndex == assignedIndex) // Jika indeks rumah cocok dengan indeks kursi
-            {
-                home.ZoneOwnerClientId.Value = clientId;
-            }
-        }
+        RefreshHomeAvailability();
 
         // 4. Baris return HARUS ditaruh di paling bawah (Menyelesaikan Unreachable Code)
         return spawnPoints[assignedIndex].position;
+    }
+
+    private void RefreshHomeAvailability()
+    {
+        HashSet<int> occupiedHomeIndices = new HashSet<int>(clientSpawnIndices.Values);
+        HomeZone[] allHomes = FindObjectsByType<HomeZone>(FindObjectsInactive.Include);
+        foreach (HomeZone home in allHomes)
+        {
+            bool isOccupied = occupiedHomeIndices.Contains(home.homeIndex);
+            ulong ownerClientId = 999;
+
+            if (isOccupied)
+            {
+                foreach (KeyValuePair<ulong, int> clientSpawn in clientSpawnIndices)
+                {
+                    if (clientSpawn.Value != home.homeIndex) continue;
+                    ownerClientId = clientSpawn.Key;
+                    break;
+                }
+            }
+
+            home.SetAvailability(isOccupied, ownerClientId);
+        }
     }
 
     public void RespawnPlayer(ulong clientId)

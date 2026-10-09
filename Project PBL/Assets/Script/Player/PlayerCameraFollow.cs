@@ -56,11 +56,11 @@ public class PlayerCameraFollow : NetworkBehaviour
         }
         else if (OwnerClientId == 1)
         {
-            orbitalFollow.HorizontalAxis.Value = 180f;
+            orbitalFollow.HorizontalAxis.Value = 270f;
         }
         else if (OwnerClientId == 2)
         {
-            orbitalFollow.HorizontalAxis.Value = 270f;
+            orbitalFollow.HorizontalAxis.Value = 180f;
         }
         else if (OwnerClientId == 3)
         {

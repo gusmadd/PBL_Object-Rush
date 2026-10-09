@@ -10,15 +10,22 @@ public class HomeZone : NetworkBehaviour
 
     // Pakai NetworkVariable agar kepemilikan rumah bisa di-update jika ada player yang reconnect (ID berubah)
     public NetworkVariable<ulong> ZoneOwnerClientId = new NetworkVariable<ulong>(999);
+    public NetworkVariable<bool> IsHomeActive = new NetworkVariable<bool>(false);
 
     [Header("Local Visual Effect")]
     [Tooltip("Komponen Light yang dipasang di dalam Home (Spotlight / Point Light)")]
     [SerializeField] private GameObject homeLight;
 
     private bool isProcessingGoal = false; // Kunci anti-dobel skor
+    private Renderer[] homeRenderers;
+    private Collider[] homeColliders;
 
     private void Awake()
     {
+        homeRenderers = GetComponentsInChildren<Renderer>(true);
+        homeColliders = GetComponentsInChildren<Collider>(true);
+        ApplyHomeActive(false);
+
         if (homeLight != null)
         {
             homeLight.SetActive(false);
@@ -29,14 +36,51 @@ public class HomeZone : NetworkBehaviour
     {
         // Pasang pendengar: Jika server mengubah pemilik rumah ini, jalankan fungsi UpdateLight
         ZoneOwnerClientId.OnValueChanged += OnOwnerChanged;
+        IsHomeActive.OnValueChanged += OnHomeActiveChanged;
 
         // Setel lampu saat pertama kali spawn
+        ApplyHomeActive(IsHomeActive.Value);
         UpdateLightEffect(ZoneOwnerClientId.Value);
     }
 
     public override void OnNetworkDespawn()
     {
         ZoneOwnerClientId.OnValueChanged -= OnOwnerChanged;
+        IsHomeActive.OnValueChanged -= OnHomeActiveChanged;
+    }
+
+    public void SetAvailability(bool isActive, ulong ownerClientId)
+    {
+        if (!IsServer) return;
+
+        ulong assignedOwner = isActive ? ownerClientId : 999;
+        if (IsHomeActive.Value != isActive)
+        {
+            IsHomeActive.Value = isActive;
+        }
+
+        if (ZoneOwnerClientId.Value != assignedOwner)
+        {
+            ZoneOwnerClientId.Value = assignedOwner;
+        }
+    }
+
+    private void OnHomeActiveChanged(bool previousValue, bool newValue)
+    {
+        ApplyHomeActive(newValue);
+    }
+
+    private void ApplyHomeActive(bool isActive)
+    {
+        foreach (Renderer homeRenderer in homeRenderers)
+        {
+            homeRenderer.enabled = isActive;
+        }
+
+        foreach (Collider homeCollider in homeColliders)
+        {
+            homeCollider.enabled = isActive;
+        }
     }
 
     private void OnOwnerChanged(ulong previousOwner, ulong newOwner)
