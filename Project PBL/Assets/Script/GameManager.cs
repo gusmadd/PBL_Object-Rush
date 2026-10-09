@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.Cinemachine;
 using UnityEngine;
 
 public class GameManager : NetworkBehaviour
@@ -16,8 +17,11 @@ public class GameManager : NetworkBehaviour
     [Header("Cinemachine Intro")]
     [SerializeField] private GameObject introCamera; // Masukkan IntroCamera dari scene ke sini
     [SerializeField] private Animator introAnimator; // Durasi animasi intro dalam detik
+    private CinemachineInputAxisController playerCameraInputController;
+    private CinemachineOrbitalFollow playerCameraOrbitalFollow;
     // Status apakah intro sedang berjalan (agar player tidak bisa gerak dulu)
     public bool IsIntroPlaying { get; private set; } = false;
+    private bool hasIntroFinished;
 
     public Dictionary<ulong, int> PlayerScores { get; private set; } = new Dictionary<ulong, int>();
     private Dictionary<ulong, ulong> scoreOrder = new Dictionary<ulong, ulong>();
@@ -32,6 +36,13 @@ public class GameManager : NetworkBehaviour
         }
         Instance = this;
 
+        GameObject playerCamera = GameObject.Find("PlayerCamera");
+        if (playerCamera != null)
+        {
+            playerCamera.TryGetComponent(out playerCameraInputController);
+            playerCamera.TryGetComponent(out playerCameraOrbitalFollow);
+        }
+
         if (introCamera != null)
         {
             introAnimator.enabled = false; // Pastikan IntroCamera mati saat awal
@@ -44,6 +55,7 @@ public class GameManager : NetworkBehaviour
         {
             IsGameActive.Value = false; // KUNCI: Game masih MATI saat di Room Lobby
             TimeRemaining.Value = matchDuration;
+            hasIntroFinished = false;
         }
 
         // Pasang listener: Jika IsGameActive berubah jadi true, sembunyikan UI Menu di semua Client
@@ -65,6 +77,7 @@ public class GameManager : NetworkBehaviour
         nextScoreOrder = 0;
         ResetScoresClientRpc();
 
+        hasIntroFinished = false;
         IsGameActive.Value = true; // RESMI MULAI GAME
         TimeRemaining.Value = matchDuration;
     }
@@ -86,6 +99,24 @@ public class GameManager : NetworkBehaviour
     private System.Collections.IEnumerator PlayIntroRoutine()
     {
         IsIntroPlaying = true;
+        if (playerCameraInputController == null)
+        {
+            Debug.LogError("[GameManager] CinemachineInputAxisController pada PlayerCamera tidak ditemukan.");
+        }
+        else
+        {
+            playerCameraInputController.enabled = false;
+        }
+
+        if (playerCameraOrbitalFollow != null)
+        {
+            playerCameraOrbitalFollow.HorizontalAxis.Value = 0f;
+            playerCameraOrbitalFollow.VerticalAxis.Value = playerCameraOrbitalFollow.VerticalAxis.Center;
+        }
+        else
+        {
+            Debug.LogError("[GameManager] CinemachineOrbitalFollow pada PlayerCamera tidak ditemukan.");
+        }
 
         if (introCamera != null)
         {
@@ -111,30 +142,46 @@ public class GameManager : NetworkBehaviour
             introCamera.SetActive(false);
         }
 
+        yield return null;
+        PlayerCameraFollow[] cameraFollows = FindObjectsByType<PlayerCameraFollow>(FindObjectsInactive.Exclude);
+        foreach (PlayerCameraFollow cameraFollow in cameraFollows)
+        {
+            if (cameraFollow.IsOwner)
+            {
+                cameraFollow.ResetCameraBehindPlayer();
+                break;
+            }
+        }
+
         yield return new WaitForSeconds(2f); // Tunggu sebentar sebelum countdown
 
         if (NetworkUI.Instance != null)
         {
-            // Karena total durasi countdown di atas sekitar 4.75 - 5 detik, kita sinkronkan di sini
-            NetworkUI.Instance.StartCoroutine(NetworkUI.Instance.PlayIntroCountdownRoutine());
+            yield return NetworkUI.Instance.PlayIntroCountdownRoutine();
         }
 
-        // Tunggu hingga seluruh rangkaian hitungan mundur dan kamera selesai (misal total 5 detik)
-        yield return new WaitForSeconds(5.0f);
-
         IsIntroPlaying = false; // Player sekarang bebas bergerak
+        if (playerCameraInputController != null)
+        {
+            playerCameraInputController.enabled = true;
+        }
 
         if (NetworkManager.Singleton.IsServer && ObjectiveSpawner.Instance != null)
         {
             ObjectiveSpawner.Instance.SpawnRandomObjective();
             Debug.Log("<color=green>[GameManager] Intro selesai, bola pertama resmi di-spawn!</color>");
         }
+
+        if (IsServer)
+        {
+            hasIntroFinished = true;
+        }
     }
 
     private void Update()
     {
         // Hanya jalan jika game SUDAH AKTIF
-        if (!IsServer || !IsGameActive.Value) return;
+        if (!IsServer || !IsGameActive.Value || !hasIntroFinished) return;
 
         if (TimeRemaining.Value > 0)
         {

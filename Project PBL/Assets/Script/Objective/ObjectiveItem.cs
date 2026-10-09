@@ -16,6 +16,9 @@ public class ObjectiveItem : NetworkBehaviour
     [SerializeField] private float throwForceUp = 3f;
     [SerializeField] private float spawnBounceImpulse = 1f;
 
+    [Header("Fall Respawn Settings")]
+    [SerializeField] private float fallYThreshold = -5f; // Batas posisi Y terendah sebelum despawn
+
     private Rigidbody rb;
     private Collider col;
     private NetworkObject netObj;
@@ -46,8 +49,6 @@ public class ObjectiveItem : NetworkBehaviour
         HasTouchedGround.OnValueChanged -= OnHasTouchedGroundChanged;
     }
 
-    [Header("Fall Respawn Settings")]
-    [SerializeField] private float fallYThreshold = -5f; // Batas posisi Y terendah sebelum despawn
 
     private void Update()
     {
@@ -81,19 +82,26 @@ public class ObjectiveItem : NetworkBehaviour
 
     // --- LOGIKA SERVER ---
 
-    public void PickUp(ulong clientId, Transform playerCarryPoint)
+    public bool PickUp(ulong clientId, Transform playerCarryPoint)
     {
-        if (!IsServer) return;
-        if (!CanBePickedUp.Value) return;
+        if (!IsServer || !CanBePickedUp.Value || IsCarried.Value) return false;
 
         NetworkObject playerObject = NetworkManager.Singleton.SpawnManager.GetPlayerNetworkObject(clientId);
-        if (playerObject == null) return;
+        if (playerObject == null) return false;
+
+        PlayerSledding playerSledding = playerObject.GetComponent<PlayerSledding>();
+        if (playerSledding != null
+            && (playerSledding.IsSledding || playerSledding.IsBeingTackled))
+        {
+            return false;
+        }
 
         CarrierClientId.Value = clientId;
         IsCarried.Value = true;
         waitingForLanding = false;
 
         SetCarrierClientRpc(playerObject.NetworkObjectId);
+        return true;
     }
 
     public void Drop(Vector3 throwDirection, bool applyThrowForce = true, float throwForceMultiplier = 1f)
@@ -153,7 +161,7 @@ public class ObjectiveItem : NetworkBehaviour
                 break;
             }
         }
-        
+
         if (collision.gameObject.CompareTag("Deadzone"))
         {
             if (ObjectiveSpawner.Instance != null && IsSpawned)

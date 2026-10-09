@@ -15,11 +15,14 @@ public class PlayerMechanics : NetworkBehaviour
     [SerializeField] private float pickupIndicatorBlinkSpeed = 4f;
 
     private readonly Collider[] pickupCheckBuffer = new Collider[16];
+    private PlayerSledding playerSledding;
 
     public Transform GetCarryPoint() => carryPoint;
 
     private void Awake()
     {
+        playerSledding = GetComponent<PlayerSledding>();
+
         if (pickupIndicator != null)
         {
             pickupIndicator.SetActive(false);
@@ -35,14 +38,24 @@ public class PlayerMechanics : NetworkBehaviour
         // Tekan 'E' untuk Ambil / Lempar Item
         if (Keyboard.current != null && Keyboard.current.eKey.wasPressedThisFrame)
         {
+            if (GetCarriedObjective() == null && IsPickupBlocked())
+                return;
+
             RequestToggleItemServerRpc();
         }
+    }
+
+    private bool IsPickupBlocked()
+    {
+        return playerSledding != null
+            && (playerSledding.IsSledding || playerSledding.IsBeingTackled);
     }
 
     private void UpdatePickupIndicator()
     {
         ObjectiveItem objective = ObjectiveItem.Instance;
-        bool canPickUp = objective != null
+        bool canPickUp = !IsPickupBlocked()
+            && objective != null
             && !objective.IsCarried.Value
             && objective.CanBePickedUp.Value;
 
@@ -105,8 +118,10 @@ public class PlayerMechanics : NetworkBehaviour
                 {
                     if (!nearbyObjective.IsCarried.Value && nearbyObjective.CanBePickedUp.Value)
                     {
-                        nearbyObjective.PickUp(OwnerClientId, carryPoint);
-                        Debug.Log($"[Server] Player {OwnerClientId} mengambil item!");
+                        if (nearbyObjective.PickUp(OwnerClientId, carryPoint))
+                        {
+                            Debug.Log($"[Server] Player {OwnerClientId} mengambil item!");
+                        }
                         break;
                     }
                 }

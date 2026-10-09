@@ -10242,7 +10242,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerMovement
   ShowTopMostFoldoutHeaderGroup: 1
   moveSpeed: 6
-  rotationSpeed: 12
+  moveSpeedWhileCarryingObjective: 5
+  rotationSpeed: 10
   runningParticles: {fileID: 6930039402999947102}
   jumpForce: 5
   groundCheckDistance: 0.5

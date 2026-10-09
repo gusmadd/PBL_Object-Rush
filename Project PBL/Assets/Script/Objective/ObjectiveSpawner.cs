@@ -11,6 +11,7 @@ public class ObjectiveSpawner : NetworkBehaviour
     [Header("Circle Spawn Area Settings")]
     [Tooltip("Pusat area spawn (posisi tengah)")]
     [SerializeField] private Vector3 centerPoint = new Vector3(0f, 1.5f, 0f);
+    public Vector3 CenterPoint => centerPoint;
 
     [Tooltip("Jari-jari/Radius area lingkaran spawn")]
     [SerializeField] private float spawnRadius = 5f;
