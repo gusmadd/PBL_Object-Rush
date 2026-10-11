@@ -2,11 +2,13 @@ using Unity.Collections;
 using Unity.Netcode;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class PlayerNameTag : NetworkBehaviour
 {
     [SerializeField] private TMP_Text nameText;
     [SerializeField] private Transform canvasTransform;
+    [SerializeField] private Image nameTagImage;
 
     public NetworkVariable<FixedString32Bytes> PlayerName = new NetworkVariable<FixedString32Bytes>(
         new FixedString32Bytes("Player"),
@@ -15,9 +17,15 @@ public class PlayerNameTag : NetworkBehaviour
     );
 
     private Transform mainCameraTransform;
+    private Color defaultNameTagColor;
 
     private void Awake()
     {
+        if (nameTagImage != null)
+        {
+            defaultNameTagColor = nameTagImage.color;
+        }
+
         if (Camera.main != null)
         {
             mainCameraTransform = Camera.main.transform;
@@ -30,6 +38,11 @@ public class PlayerNameTag : NetworkBehaviour
 
         // Tampilkan nama saat ini
         UpdateNameDisplay(PlayerName.Value.ToString());
+
+        if (nameTagImage != null)
+        {
+            nameTagImage.color = IsOwner ? defaultNameTagColor : Color.red;
+        }
 
         if (NetworkUI.Instance != null)
         {
