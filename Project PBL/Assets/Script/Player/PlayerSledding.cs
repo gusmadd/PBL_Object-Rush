@@ -90,6 +90,8 @@ public class PlayerSledding : NetworkBehaviour
         canSlide = false;
         hitClients.Clear(); // Bersihkan daftar korban
 
+        SoundManager.Instance?.PlaySleddingSfx();
+
         // NYALAKAN HITBOX DI LOKAL AGAR BISA MENDETEKSI TABRAKAN SECARA INSTAN
         if (hitbox != null) hitbox.enabled = true;
 
@@ -306,6 +308,11 @@ public class PlayerSledding : NetworkBehaviour
 
     private IEnumerator TackleEffectRoutine(Vector3 direction)
     {
+        if (IsOwner)
+        {
+            SoundManager.Instance?.PlaySleddingEffectSfx();
+        }
+
         RigidbodyConstraints originalConstraints = rb.constraints;
         SetSleddingState(true);
 

@@ -120,6 +120,7 @@ public class GameManager : NetworkBehaviour
 
         if (introCamera != null)
         {
+            SoundManager.Instance?.PlayCameraIntroSfx();
             // 1. Nyalakan objek IntroCamera saat Start Game ditekan
             introAnimator.enabled = true;
 
@@ -160,6 +161,7 @@ public class GameManager : NetworkBehaviour
             yield return NetworkUI.Instance.PlayIntroCountdownRoutine();
         }
 
+        SoundManager.Instance?.PlayGameplayBgm();
         IsIntroPlaying = false; // Player sekarang bebas bergerak
         if (playerCameraInputController != null)
         {
@@ -217,6 +219,13 @@ public class GameManager : NetworkBehaviour
         scoreOrder[clientId] = ++nextScoreOrder;
 
         UpdateScoreClientRpc(clientId, PlayerScores[clientId], scoreOrder[clientId]);
+
+        var clientRpcParams = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
+        };
+        PlayGoalSfxClientRpc(clientRpcParams);
+
         Debug.Log($"<color=cyan>[SCORE] Player {clientId} mendapatkan {points} poin. Total Skor: {PlayerScores[clientId]}</color>");
     }
 
@@ -225,6 +234,12 @@ public class GameManager : NetworkBehaviour
     {
         PlayerScores[clientId] = newScore;
         scoreOrder[clientId] = newScoreOrder;
+    }
+
+    [ClientRpc]
+    private void PlayGoalSfxClientRpc(ClientRpcParams clientRpcParams = default)
+    {
+        SoundManager.Instance?.PlayGoalSfx();
     }
 
     private void EndMatch()

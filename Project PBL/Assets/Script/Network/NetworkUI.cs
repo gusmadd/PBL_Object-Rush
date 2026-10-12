@@ -502,6 +502,7 @@ public class NetworkUI : MonoBehaviour
         if (readyImage != null) readyImage.SetActive(false);
 
         // 2. Tampilkan angka "3" (3 detik)
+        SoundManager.Instance?.PlayIntroSfx();
         if (thirdTimeImage != null) thirdTimeImage.SetActive(true);
         yield return new WaitForSeconds(1f);
         if (thirdTimeImage != null) thirdTimeImage.SetActive(false);
