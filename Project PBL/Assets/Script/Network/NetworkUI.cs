@@ -114,7 +114,7 @@ public class NetworkUI : MonoBehaviour
         clientBtn.onClick.AddListener(() =>
         {
             SaveUsername();
-            mainMenuPanel.SetActive(false);
+           // mainMenuPanel.SetActive(false);
             if (joinCodePanel != null) joinCodePanel.SetActive(true);
         });
 

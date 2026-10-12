@@ -47,14 +47,14 @@ public class InGameHUDManager : MonoBehaviour
     {
         if (GameManager.Instance == null) return;
 
-        // Tampilkan HUD hanya saat game resmi berjalan
-        bool isGameActive = GameManager.Instance.IsGameActive.Value;
-        if (hudPanel != null && hudPanel.activeSelf != isGameActive)
+        // Tampilkan HUD setelah intro dan countdown selesai.
+        bool shouldShowHud = GameManager.Instance.IsGameActive.Value && !GameManager.Instance.IsIntroPlaying;
+        if (hudPanel != null && hudPanel.activeSelf != shouldShowHud)
         {
-            hudPanel.SetActive(isGameActive);
+            hudPanel.SetActive(shouldShowHud);
         }
 
-        if (!isGameActive) return;
+        if (!shouldShowHud) return;
 
         // 1. Update Timer Format MM:SS
         UpdateTimerDisplay(GameManager.Instance.TimeRemaining.Value);

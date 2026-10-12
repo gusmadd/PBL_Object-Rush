@@ -5010,14 +5010,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.Image
   m_Material: {fileID: 0}
-  m_Color: {r: 0.44234788, g: 0.66666657, b: 0.5009836, a: 1}
+  m_Color: {r: 0.77672946, g: 1, b: 0.8325471, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: a3ed10e191a61b84581cc035e53ff958, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -10213,7 +10213,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 2621224683
+  GlobalObjectIdHash: 2126982395
   InScenePlacedSourceGlobalObjectIdHash: 2621224683
   m_InScenePlacedDisabledByDefault: 0
   DeferredDespawnTick: 0
@@ -10313,6 +10313,7 @@ MonoBehaviour:
   ShowTopMostFoldoutHeaderGroup: 1
   nameText: {fileID: 7434718447852863621}
   canvasTransform: {fileID: 161517422338810644}
+  nameTagImage: {fileID: 7444382579237495008}
   PlayerName:
     UpdateTraits:
       MinSecondsBetweenUpdates: 0
