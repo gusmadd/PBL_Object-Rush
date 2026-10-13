@@ -72,7 +72,7 @@ public class InGameHUDManager : MonoBehaviour
         int minutes = Mathf.FloorToInt(timeInSeconds / 60f);
         int seconds = Mathf.FloorToInt(timeInSeconds % 60f);
 
-        timerText.text = string.Format("Time: {0:00}:{1:00}", minutes, seconds);
+        timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
     }
 
     public void SetSleddingCooldown(float progress)
@@ -152,11 +152,15 @@ public class InGameHUDManager : MonoBehaviour
                     playerName = NetworkUI.Instance.GetDisplayNameForClient(clientId);
                 }
 
-                playerScoreTexts[i].text = $"{playerName}: {score} PTS";
+                playerScoreTexts[i].text = $"{playerName} : {score} ";
+                playerScoreTexts[i].color = clientId == NetworkManager.Singleton.LocalClientId
+                    ? new Color32(108, 253, 77, 255)
+                    : Color.white;
             }
             else
             {
                 playerScoreTexts[i].text = ""; // Kosongkan slot jika player < 4
+                playerScoreTexts[i].color = Color.white;
             }
         }
     }
