@@ -20,6 +20,7 @@ public class PlayerMovement : NetworkBehaviour
     [SerializeField] private LayerMask groundLayer;
 
     private Rigidbody rb;
+   [SerializeField] private AudioSource runAudioSource;
     private Transform mainCameraTransform;
     private CapsuleCollider capsuleCollider;
     private bool isGrounded;
@@ -83,6 +84,8 @@ public class PlayerMovement : NetworkBehaviour
 
     public override void OnNetworkDespawn()
     {
+        StopRunAudio();
+
         if (!IsOwner) return;
 
         Cursor.lockState = CursorLockMode.None;
@@ -92,6 +95,9 @@ public class PlayerMovement : NetworkBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        runAudioSource = gameObject.AddComponent<AudioSource>();
+        runAudioSource.playOnAwake = false;
+        runAudioSource.spatialBlend = 0f;
         capsuleCollider = GetComponent<CapsuleCollider>();
 
         rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
@@ -152,9 +158,13 @@ public class PlayerMovement : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        if (!IsOwner || !Application.isFocused)
+        if (!IsOwner)
             return;
-        if (GameManager.Instance != null && GameManager.Instance.IsIntroPlaying) return;
+        if (!Application.isFocused || (GameManager.Instance != null && GameManager.Instance.IsIntroPlaying))
+        {
+            StopRunning();
+            return;
+        }
 
         CheckGrounded();
 
@@ -175,8 +185,13 @@ public class PlayerMovement : NetworkBehaviour
             runParticleActive = isRunning;
             if (isRunning)
             {
-                SoundManager.Instance?.PlayRunSfx();
+                SoundManager.Instance?.PlayRunSfx(runAudioSource);
             }
+            else
+            {
+                StopRunAudio();
+            }
+
             SetRunningParticleServerRpc(isRunning);
         }
 
@@ -185,6 +200,24 @@ public class PlayerMovement : NetworkBehaviour
         HandleMovementInput();
         HandleJumpInput();
     }
+
+    private void StopRunAudio()
+    {
+        if (runAudioSource != null && runAudioSource.isPlaying)
+        {
+            runAudioSource.Stop();
+        }
+    }
+
+    private void StopRunning()
+    {
+        StopRunAudio();
+        if (!runParticleActive) return;
+
+        runParticleActive = false;
+        SetRunningParticleServerRpc(false);
+    }
+
     [ServerRpc]
     private void SetRunningParticleServerRpc(bool isRunning)
     {

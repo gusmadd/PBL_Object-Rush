@@ -110,9 +110,22 @@ public class SoundManager : NetworkBehaviour
     {
         PlaySfx(sfxThrowClip, "throw");
     }
-    public void PlayRunSfx()
+    public void PlayRunSfx(AudioSource audioSource)
     {
-        PlaySfx(sfxRunClip, "run");
+        if (audioSource == null || sfxRunClip == null)
+        {
+            Debug.LogError("[SoundManager] AudioSource atau clip SFX run belum diatur.", this);
+            return;
+        }
+
+        if (audioSource.isPlaying && audioSource.clip == sfxRunClip)
+        {
+            return;
+        }
+
+        audioSource.clip = sfxRunClip;
+        audioSource.loop = true;
+        audioSource.Play();
     }
 
     private void PlaySfx(AudioClip clip, string clipName)
