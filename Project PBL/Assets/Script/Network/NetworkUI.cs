@@ -29,8 +29,11 @@ public class NetworkUI : MonoBehaviour
     [Header("Game Over UI")]
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private TextMeshProUGUI firstPlaceText;
+    [SerializeField] private TextMeshProUGUI firstPlaceScoreText;
     [SerializeField] private TextMeshProUGUI secondPlaceText;
+    [SerializeField] private TextMeshProUGUI secondPlaceScoreText;
     [SerializeField] private TextMeshProUGUI thirdPlaceText;
+    [SerializeField] private TextMeshProUGUI thirdPlaceScoreText;
     [SerializeField] private Button backToMainMenuBtn;
 
     [Header("Main Menu UI")]
@@ -405,13 +408,17 @@ public class NetworkUI : MonoBehaviour
     public void ShowGameOver(ulong[] rankedClientIds)
     {
         if (gameOverPanel == null) return;
+        SoundManager.Instance?.StopGameplayBgm();
         mainMenuPanel.SetActive(false);
         roomPanel.SetActive(false);
         gameOverPanel.SetActive(true);
 
         SetRankText(firstPlaceText, rankedClientIds, 0);
+        SetRankScoreText(firstPlaceScoreText, rankedClientIds, 0);
         SetRankText(secondPlaceText, rankedClientIds, 1);
+        SetRankScoreText(secondPlaceScoreText, rankedClientIds, 1);
         SetRankText(thirdPlaceText, rankedClientIds, 2);
+        SetRankScoreText(thirdPlaceScoreText, rankedClientIds, 2);
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -421,6 +428,14 @@ public class NetworkUI : MonoBehaviour
     {
         if (rankText == null) return;
         rankText.text = rankIndex < rankedClientIds.Length ? GetDisplayNameForClient(rankedClientIds[rankIndex]) : "No player";
+    }
+
+    private void SetRankScoreText(TextMeshProUGUI scoreText, ulong[] rankedClientIds, int rankIndex)
+    {
+        if (scoreText == null) return;
+        scoreText.text = rankIndex < rankedClientIds.Length
+            ? $"{GameManager.Instance.GetScore(rankedClientIds[rankIndex])} PTS"
+            : string.Empty;
     }
 
     private void ReturnToMainMenu()

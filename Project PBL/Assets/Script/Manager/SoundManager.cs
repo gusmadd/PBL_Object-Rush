@@ -57,6 +57,17 @@ public class SoundManager : NetworkBehaviour
         bgmAudioSource.Play();
     }
 
+    public void StopGameplayBgm()
+    {
+        if (bgmAudioSource == null)
+        {
+            Debug.LogError("[SoundManager] AudioSource BGM gameplay belum diatur.", this);
+            return;
+        }
+
+        bgmAudioSource.Stop();
+    }
+
     public void PlayIntroSfx()
     {
         PlaySfx(sfxIntroClip, "intro");
