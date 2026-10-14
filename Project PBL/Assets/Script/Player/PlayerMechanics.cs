@@ -147,6 +147,11 @@ public class PlayerMechanics : NetworkBehaviour
     [ClientRpc]
     private void PlayThrowAnimationClientRpc()
     {
+        if (IsOwner)
+        {
+            SoundManager.Instance?.PlayThrowSfx();
+        }
+
         PlayerAnimation playerAnim = GetComponent<PlayerAnimation>();
         if (playerAnim != null)
         {

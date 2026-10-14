@@ -335,6 +335,8 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 0b2d3470bc0e3c34a9986f437e0553d3, type: 3}
   sfxGoalClip: {fileID: 8300000, guid: 7fa54cfcb5ead0e46a36c66c31cfd811, type: 3}
   sfxSleddinClip: {fileID: 8300000, guid: 1b58c78df8b965844b3d4451990ee244, type: 3}
+  sfxThrowClip: {fileID: 8300000, guid: c05ef07c548ea3e4bafacb53613e1ff4, type: 3}
+  sfxRunClip: {fileID: 8300000, guid: 7162b7e26ec9ecc4c9cfe45b08488d69, type: 3}
 --- !u!1 &90935527
 GameObject:
   m_ObjectHideFlags: 0

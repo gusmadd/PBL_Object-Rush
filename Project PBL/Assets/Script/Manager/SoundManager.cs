@@ -20,6 +20,8 @@ public class SoundManager : NetworkBehaviour
     [SerializeField] private AudioClip[] sfxUIClickClips;
     [SerializeField] private AudioClip sfxGoalClip;
     [SerializeField] private AudioClip sfxSleddinClip;
+    [SerializeField] private AudioClip sfxThrowClip;
+    [SerializeField] private AudioClip sfxRunClip;
 
     private void Awake()
     {
@@ -102,6 +104,15 @@ public class SoundManager : NetworkBehaviour
     public void PlayGoalSfx()
     {
         PlaySfx(sfxGoalClip, "goal");
+    }
+
+    public void PlayThrowSfx()
+    {
+        PlaySfx(sfxThrowClip, "throw");
+    }
+    public void PlayRunSfx()
+    {
+        PlaySfx(sfxRunClip, "run");
     }
 
     private void PlaySfx(AudioClip clip, string clipName)

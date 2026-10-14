@@ -173,6 +173,10 @@ public class PlayerMovement : NetworkBehaviour
         if (isRunning != runParticleActive)
         {
             runParticleActive = isRunning;
+            if (isRunning)
+            {
+                SoundManager.Instance?.PlayRunSfx();
+            }
             SetRunningParticleServerRpc(isRunning);
         }
 
