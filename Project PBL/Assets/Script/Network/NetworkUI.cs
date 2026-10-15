@@ -61,10 +61,20 @@ public class NetworkUI : MonoBehaviour
 
     // Variabel untuk menyimpan kode murni agar mudah di-copy
     private string currentRoomCode = "";
+    private const int MaxUsernameLength = 15;
 
     private void Awake()
     {
         Instance = this;
+
+        if (usernameInput != null)
+        {
+            usernameInput.characterLimit = MaxUsernameLength;
+            if (usernameInput.text.Length > MaxUsernameLength)
+            {
+                usernameInput.text = usernameInput.text.Substring(0, MaxUsernameLength);
+            }
+        }
 
         mainMenuPanel.SetActive(true);
         roomPanel.SetActive(false);
@@ -288,7 +298,12 @@ public class NetworkUI : MonoBehaviour
 
     private void SaveUsername()
     {
-        if (!string.IsNullOrEmpty(usernameInput.text)) LocalUsername = usernameInput.text;
+        if (!string.IsNullOrEmpty(usernameInput.text))
+        {
+            LocalUsername = usernameInput.text.Length > MaxUsernameLength
+                ? usernameInput.text.Substring(0, MaxUsernameLength)
+                : usernameInput.text;
+        }
         else LocalUsername = "Player " + Random.Range(1, 99);
     }
 
@@ -379,7 +394,13 @@ public class NetworkUI : MonoBehaviour
             if (i < count)
             {
                 ulong clientId = clientIds[i];
-                playerSlotTexts[i].text = GetDisplayNameForClient(clientId);
+                string playerName = GetDisplayNameForClient(clientId);
+                if (clientId == NetworkManager.Singleton.LocalClientId)
+                {
+                    playerName += " (You)";
+                }
+
+                playerSlotTexts[i].text = playerName;
             }
             else
             {
@@ -407,7 +428,16 @@ public class NetworkUI : MonoBehaviour
 
     public void ShowGameOver(ulong[] rankedClientIds)
     {
+        if (NetworkManager.Singleton != null &&
+            NetworkManager.Singleton.LocalClient != null &&
+            NetworkManager.Singleton.LocalClient.PlayerObject != null &&
+            NetworkManager.Singleton.LocalClient.PlayerObject.TryGetComponent(out PlayerMovement playerMovement))
+        {
+            playerMovement.StopRunAudio();
+        }
+
         if (gameOverPanel == null) return;
+
         SoundManager.Instance?.StopGameplayBgm();
         mainMenuPanel.SetActive(false);
         roomPanel.SetActive(false);

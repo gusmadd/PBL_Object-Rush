@@ -201,7 +201,7 @@ public class PlayerMovement : NetworkBehaviour
         HandleJumpInput();
     }
 
-    private void StopRunAudio()
+    public void StopRunAudio()
     {
         if (runAudioSource != null && runAudioSource.isPlaying)
         {
