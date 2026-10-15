@@ -1965,7 +1965,7 @@ MonoBehaviour:
   m_ProtocolType: 0
   m_UseWebSockets: 0
   m_UseEncryption: 0
-  m_MaxPacketQueueSize: 128
+  m_MaxPacketQueueSize: 1024
   m_MaxPayloadSize: 6144
   m_HeartbeatTimeoutMS: 500
   m_ConnectTimeoutMS: 1000
@@ -2580,8 +2580,8 @@ SceneRoots:
   m_Roots:
   - {fileID: 465298503}
   - {fileID: 210287653}
-  - {fileID: 1408659147}
   - {fileID: 1385082752}
+  - {fileID: 1408659147}
   - {fileID: 1114099197}
   - {fileID: 638897443}
   - {fileID: 1693450870}
