@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-labelledby="title description">
+  <title id="title">Topologi Client-Server Object Rush</title>
+  <desc id="description">Host menjadi server authoritative untuk objek pick. Client mengirim permintaan pick dan menerima status objek yang disinkronkan.</desc>
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/>
+    </marker>
+    <style>
+      .title { font: 700 28px Arial, sans-serif; fill: #172554; }
+      .subtitle { font: 16px Arial, sans-serif; fill: #475569; }
+      .box-title { font: 700 20px Arial, sans-serif; fill: #0f172a; }
+      .text { font: 16px Arial, sans-serif; fill: #334155; }
+      .small { font: 14px Arial, sans-serif; fill: #475569; }
+      .arrow-label { font: 700 14px Arial, sans-serif; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="700" fill="#f8fafc"/>
+  <text x="600" y="48" text-anchor="middle" class="title">Topologi Client-Server — Object Rush</text>
+  <text x="600" y="77" text-anchor="middle" class="subtitle">Model Host-Authoritative (Unity Netcode for GameObjects)</text>
+
+  <rect x="360" y="115" width="480" height="260" rx="18" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
+  <text x="600" y="151" text-anchor="middle" class="box-title">HOST = SERVER + CLIENT LOKAL</text>
+  <text x="600" y="183" text-anchor="middle" class="text">Pemegang authority atas objek pick</text>
+  <rect x="395" y="207" width="410" height="138" rx="12" fill="#ffffff" stroke="#93c5fd" stroke-width="2"/>
+  <text x="600" y="237" text-anchor="middle" class="box-title">Logika server pada Host</text>
+  <text x="420" y="270" class="text">• Validasi status objek dan kondisi pemain</text>
+  <text x="420" y="299" class="text">• Mengubah IsCarried / CanBePickedUp</text>
+  <text x="420" y="328" class="text">• Menyinkronkan status kepada semua client</text>
+
+  <rect x="55" y="470" width="260" height="130" rx="14" fill="#ffffff" stroke="#64748b" stroke-width="2"/>
+  <text x="185" y="510" text-anchor="middle" class="box-title">Client 1</text>
+  <text x="185" y="540" text-anchor="middle" class="text">Input pick / drop</text>
+  <text x="185" y="567" text-anchor="middle" class="small">Menampilkan status objek</text>
+
+  <rect x="470" y="470" width="260" height="130" rx="14" fill="#ffffff" stroke="#64748b" stroke-width="2"/>
+  <text x="600" y="510" text-anchor="middle" class="box-title">Client 2</text>
+  <text x="600" y="540" text-anchor="middle" class="text">Input pick / drop</text>
+  <text x="600" y="567" text-anchor="middle" class="small">Menampilkan status objek</text>
+
+  <rect x="885" y="470" width="260" height="130" rx="14" fill="#ffffff" stroke="#64748b" stroke-width="2"/>
+  <text x="1015" y="510" text-anchor="middle" class="box-title">Client 3</text>
+  <text x="1015" y="540" text-anchor="middle" class="text">Input pick / drop</text>
+  <text x="1015" y="567" text-anchor="middle" class="small">Menampilkan status objek</text>
+
+  <path d="M315 500 C350 450, 405 420, 450 375" fill="none" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <path d="M600 470 L600 383" fill="none" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <path d="M885 500 C850 450, 795 420, 750 375" fill="none" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <text x="327" y="430" class="arrow-label" fill="#1d4ed8">Permintaan pick (ServerRpc)</text>
+  <text x="600" y="425" text-anchor="middle" class="arrow-label" fill="#1d4ed8">Permintaan pick</text>
+  <text x="873" y="430" text-anchor="end" class="arrow-label" fill="#1d4ed8">Permintaan pick (ServerRpc)</text>
+
+  <path d="M440 375 C390 410, 340 438, 280 470" fill="none" stroke="#16a34a" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#arrow-green)"/>
+  <path d="M600 375 L600 462" fill="none" stroke="#16a34a" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#arrow-green)"/>
+  <path d="M760 375 C810 410, 860 438, 920 470" fill="none" stroke="#16a34a" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#arrow-green)"/>
+  <text x="600" y="635" text-anchor="middle" class="small" fill="#15803d">Status objek disiarkan kembali (NetworkVariable / ClientRpc)</text>
+  <text x="600" y="675" text-anchor="middle" class="small">Host dan client lain melihat hasil pick yang sama</text>
+</svg>

@@ -116,7 +116,7 @@ public class PlayerMovement : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsOwner || !Application.isFocused || Keyboard.current == null)
+        if (!IsOwner || !Application.isFocused)
             return;
         if (GameManager.Instance != null && GameManager.Instance.IsIntroPlaying) return;
         if (GameManager.Instance != null && GameManager.Instance.IsGameActive.Value)
@@ -140,20 +140,47 @@ public class PlayerMovement : NetworkBehaviour
             mainCameraTransform = Camera.main.transform;
         }
 
-        float horizontal = 0f;
-        float vertical = 0f;
-
-        if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) horizontal -= 1f;
-        if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) horizontal += 1f;
-        if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) vertical += 1f;
-        if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) vertical -= 1f;
-
-        moveInput = new Vector3(horizontal, 0f, vertical).normalized;
-
-        if (Keyboard.current.spaceKey.wasPressedThisFrame)
+        if (Application.isMobilePlatform)
         {
-            jumpBufferCounter = jumpBufferTime;
+            Vector2 joystickInput = Gamepad.current != null
+                ? Gamepad.current.leftStick.ReadValue()
+                : Vector2.zero;
+            moveInput = new Vector3(joystickInput.x, 0f, joystickInput.y);
         }
+        else
+        {
+            float horizontal = 0f;
+            float vertical = 0f;
+
+            if (Keyboard.current != null)
+            {
+                if (Keyboard.current.aKey.isPressed || Keyboard.current.leftArrowKey.isPressed) horizontal -= 1f;
+                if (Keyboard.current.dKey.isPressed || Keyboard.current.rightArrowKey.isPressed) horizontal += 1f;
+                if (Keyboard.current.wKey.isPressed || Keyboard.current.upArrowKey.isPressed) vertical += 1f;
+                if (Keyboard.current.sKey.isPressed || Keyboard.current.downArrowKey.isPressed) vertical -= 1f;
+
+                if (Keyboard.current.spaceKey.wasPressedThisFrame)
+                {
+                    jumpBufferCounter = jumpBufferTime;
+                }
+            }
+
+            moveInput = new Vector3(horizontal, 0f, vertical).normalized;
+        }
+    }
+
+    public void JumpFromMobile()
+    {
+        if (!IsOwner
+            || !Application.isFocused
+            || !Application.isMobilePlatform
+            || (GameManager.Instance != null
+                && (GameManager.Instance.IsIntroPlaying || !GameManager.Instance.IsGameActive.Value)))
+        {
+            return;
+        }
+
+        jumpBufferCounter = jumpBufferTime;
     }
 
     private void FixedUpdate()

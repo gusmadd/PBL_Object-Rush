@@ -65,15 +65,24 @@ public class PlayerSledding : NetworkBehaviour
 
         if (Keyboard.current != null && Keyboard.current.leftShiftKey.wasPressedThisFrame)
         {
-            if (canSlide && !isSledding && !IsCarryingObjective() && movement != null && movement.IsGrounded)
-            {
-                // 1. Langsung jalankan gerakan sledding dan nyalakan hitbox di layar sendiri (Client-Side)
-                StartCoroutine(SleddingRoutineLocal(transform.forward));
-
-                // 2. Lapor ke Server untuk memunculkan efek visual/partikel ke player lain
-                RequestSleddingServerRpc(transform.forward);
-            }
+            StartSledding();
         }
+    }
+
+    public bool CanStartSledding =>
+        canSlide
+        && !isSledding
+        && !IsCarryingObjective()
+        && movement != null
+        && movement.IsGrounded;
+
+    public void StartSledding()
+    {
+        if (!IsOwner || !CanStartSledding)
+            return;
+
+        StartCoroutine(SleddingRoutineLocal(transform.forward));
+        RequestSleddingServerRpc(transform.forward);
     }
 
     private bool IsCarryingObjective()

@@ -16,8 +16,20 @@ public class PlayerMechanics : NetworkBehaviour
 
     private readonly Collider[] pickupCheckBuffer = new Collider[16];
     private PlayerSledding playerSledding;
+    private bool canPickUpNearbyObjective;
 
     public Transform GetCarryPoint() => carryPoint;
+    public bool IsCarryingObjective
+    {
+        get
+        {
+            ObjectiveItem objective = ObjectiveItem.Instance;
+            return objective != null
+                && objective.IsCarried.Value
+                && objective.CarrierClientId.Value == OwnerClientId;
+        }
+    }
+    public bool CanPickUpNearbyObjective => canPickUpNearbyObjective;
 
     private void Awake()
     {
@@ -83,6 +95,8 @@ public class PlayerMechanics : NetworkBehaviour
             }
         }
 
+        canPickUpNearbyObjective = canPickUp;
+
         if (pickupIndicator != null && pickupIndicator.activeSelf != canPickUp)
         {
             pickupIndicator.SetActive(canPickUp);
@@ -93,6 +107,22 @@ public class PlayerMechanics : NetworkBehaviour
             float blink = (Mathf.Sin(Time.time * pickupIndicatorBlinkSpeed) + 1f) * 0.5f;
             pickupIndicatorImage.color = Color.Lerp(Color.green, Color.white, blink);
         }
+    }
+
+    public void PickUpObjectiveFromMobile()
+    {
+        if (!IsOwner || IsCarryingObjective || IsPickupBlocked() || !canPickUpNearbyObjective)
+            return;
+
+        RequestMobilePickupServerRpc();
+    }
+
+    public void ThrowObjectiveFromMobile()
+    {
+        if (!IsOwner || !IsCarryingObjective)
+            return;
+
+        RequestMobileThrowServerRpc();
     }
 
     [ServerRpc]
@@ -110,23 +140,51 @@ public class PlayerMechanics : NetworkBehaviour
         }
         else
         {
-            // 2. Jika tidak membawa item, cari ObjectiveItem bebas di sekitar Player
-            Collider[] hitColliders = Physics.OverlapSphere(transform.position, pickupRange);
-            foreach (var hit in hitColliders)
+            if (TryPickUpNearbyObjective())
             {
-                if (hit.TryGetComponent<ObjectiveItem>(out var nearbyObjective))
-                {
-                    if (!nearbyObjective.IsCarried.Value && nearbyObjective.CanBePickedUp.Value)
-                    {
-                        if (nearbyObjective.PickUp(OwnerClientId, carryPoint))
-                        {
-                            Debug.Log($"[Server] Player {OwnerClientId} mengambil item!");
-                        }
-                        break;
-                    }
-                }
+                Debug.Log($"[Server] Player {OwnerClientId} mengambil item!");
             }
         }
+    }
+
+    [ServerRpc]
+    private void RequestMobilePickupServerRpc()
+    {
+        if (GetCarriedObjective() != null || IsPickupBlocked())
+            return;
+
+        if (TryPickUpNearbyObjective())
+        {
+            Debug.Log($"[Server] Player {OwnerClientId} mengambil item!");
+        }
+    }
+
+    [ServerRpc]
+    private void RequestMobileThrowServerRpc()
+    {
+        ObjectiveItem carriedObjective = GetCarriedObjective();
+        if (carriedObjective == null)
+            return;
+
+        PlayThrowAnimationClientRpc();
+        carriedObjective.Drop(transform.forward);
+        Debug.Log($"[Server] Player {OwnerClientId} melempar item!");
+    }
+
+    private bool TryPickUpNearbyObjective()
+    {
+        Collider[] hitColliders = Physics.OverlapSphere(transform.position, pickupRange);
+        foreach (Collider hit in hitColliders)
+        {
+            if (hit.TryGetComponent<ObjectiveItem>(out ObjectiveItem nearbyObjective)
+                && !nearbyObjective.IsCarried.Value
+                && nearbyObjective.CanBePickedUp.Value)
+            {
+                return nearbyObjective.PickUp(OwnerClientId, carryPoint);
+            }
+        }
+
+        return false;
     }
 
     private ObjectiveItem GetCarriedObjective()
