@@ -14,7 +14,6 @@ public class PlayerMechanics : NetworkBehaviour
     [SerializeField] private Image pickupIndicatorImage;
     [SerializeField] private float pickupIndicatorBlinkSpeed = 4f;
 
-    private readonly Collider[] pickupCheckBuffer = new Collider[16];
     private PlayerSledding playerSledding;
     private bool canPickUpNearbyObjective;
 
@@ -69,31 +68,8 @@ public class PlayerMechanics : NetworkBehaviour
         bool canPickUp = !IsPickupBlocked()
             && objective != null
             && !objective.IsCarried.Value
-            && objective.CanBePickedUp.Value;
-
-        if (canPickUp)
-        {
-            int hitCount = Physics.OverlapSphereNonAlloc(
-                transform.position,
-                pickupRange,
-                pickupCheckBuffer
-            );
-
-            canPickUp = false;
-            for (int i = 0; i < hitCount; i++)
-            {
-                Collider hit = pickupCheckBuffer[i];
-                if (hit != null
-                    && hit.TryGetComponent<ObjectiveItem>(out ObjectiveItem nearbyObjective)
-                    && nearbyObjective == objective
-                    && !nearbyObjective.IsCarried.Value
-                    && nearbyObjective.CanBePickedUp.Value)
-                {
-                    canPickUp = true;
-                    break;
-                }
-            }
-        }
+            && objective.CanBePickedUp.Value
+            && IsObjectiveWithinPickupRange(objective);
 
         canPickUpNearbyObjective = canPickUp;
 
@@ -173,18 +149,26 @@ public class PlayerMechanics : NetworkBehaviour
 
     private bool TryPickUpNearbyObjective()
     {
-        Collider[] hitColliders = Physics.OverlapSphere(transform.position, pickupRange);
-        foreach (Collider hit in hitColliders)
+        ObjectiveItem objective = ObjectiveItem.Instance;
+        if (objective == null
+            || objective.IsCarried.Value
+            || !objective.CanBePickedUp.Value
+            || !IsObjectiveWithinPickupRange(objective))
         {
-            if (hit.TryGetComponent<ObjectiveItem>(out ObjectiveItem nearbyObjective)
-                && !nearbyObjective.IsCarried.Value
-                && nearbyObjective.CanBePickedUp.Value)
-            {
-                return nearbyObjective.PickUp(OwnerClientId, carryPoint);
-            }
+            return false;
         }
 
-        return false;
+        return objective.PickUp(OwnerClientId, carryPoint);
+    }
+
+    private bool IsObjectiveWithinPickupRange(ObjectiveItem objective)
+    {
+        Collider objectiveCollider = objective.GetComponent<Collider>();
+        Vector3 nearestPoint = objectiveCollider != null && objectiveCollider.enabled
+            ? objectiveCollider.ClosestPoint(transform.position)
+            : objective.transform.position;
+
+        return (nearestPoint - transform.position).sqrMagnitude <= pickupRange * pickupRange;
     }
 
     private ObjectiveItem GetCarriedObjective()

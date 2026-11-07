@@ -35,6 +35,12 @@ public class PlayerCameraFollow : NetworkBehaviour
             freeLookCam.Follow = target;
             freeLookCam.LookAt = target;
 
+            if (Application.isMobilePlatform
+                && camObj.TryGetComponent<CinemachineInputAxisController>(out var inputAxisController))
+            {
+                inputAxisController.enabled = false;
+            }
+
             orbitalFollow = camObj.GetComponent<CinemachineOrbitalFollow>();
             ResetCameraBehindPlayer();
 
