@@ -19,8 +19,14 @@ public class InGameHUDManager : MonoBehaviour
     [Header("Timer Display")]
     [SerializeField] private TextMeshProUGUI timerText;
 
+    [Header("Ping Display")]
+    [SerializeField] private TextMeshProUGUI pingText;
+    [SerializeField, Min(0.1f)] private float pingRefreshInterval = 0.5f;
+
     [Header("Scoreboard Displays (4 Player Slots)")]
     [SerializeField] private TextMeshProUGUI[] playerScoreTexts;
+
+    private float nextPingUpdateTime;
 
     private void Awake()
     {
@@ -54,13 +60,46 @@ public class InGameHUDManager : MonoBehaviour
             hudPanel.SetActive(shouldShowHud);
         }
 
-        if (!shouldShowHud) return;
+        if (!shouldShowHud)
+        {
+            if (pingText != null)
+            {
+                pingText.text = "Ping: -- ms";
+            }
+
+            return;
+        }
 
         // 1. Update Timer Format MM:SS
         UpdateTimerDisplay(GameManager.Instance.TimeRemaining.Value);
 
-        // 2. Update Live Scoreboard
+        // 2. Update network latency
+        UpdatePingDisplay();
+
+        // 3. Update Live Scoreboard
         UpdateScoreboardDisplay();
+    }
+
+    private void UpdatePingDisplay()
+    {
+        if (pingText == null || Time.unscaledTime < nextPingUpdateTime)
+            return;
+
+        nextPingUpdateTime = Time.unscaledTime + pingRefreshInterval;
+
+        NetworkManager networkManager = NetworkManager.Singleton;
+        if (networkManager == null
+            || !networkManager.IsListening
+            || networkManager.NetworkConfig.NetworkTransport == null)
+        {
+            pingText.text = "Ping: -- ms";
+            return;
+        }
+
+        ulong roundTripTime = networkManager.NetworkConfig.NetworkTransport.GetCurrentRtt(
+            NetworkManager.ServerClientId
+        );
+        pingText.text = $"Ping: {roundTripTime} ms";
     }
 
     private void UpdateTimerDisplay(float timeInSeconds)
