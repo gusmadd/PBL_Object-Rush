@@ -16,6 +16,8 @@ public class NetworkUI : MonoBehaviour
     [Header("UI Panels")]
     [SerializeField] private GameObject mainMenuPanel;
     [SerializeField] private GameObject roomPanel;
+    [SerializeField] private GameObject infoPanel;
+    [SerializeField] private Button infoButton;
 
     [Header("Room Code UI (Baru)")]
     [SerializeField] private GameObject joinCodePanel;
@@ -62,6 +64,9 @@ public class NetworkUI : MonoBehaviour
     // Variabel untuk menyimpan kode murni agar mudah di-copy
     private string currentRoomCode = "";
     private const int MaxUsernameLength = 15;
+    private Animator infoPanelAnimator;
+    private Button closeInfoPanelButton;
+    private Coroutine infoPanelAnimationRoutine;
 
     private void Awake()
     {
@@ -78,10 +83,50 @@ public class NetworkUI : MonoBehaviour
 
         mainMenuPanel.SetActive(true);
         roomPanel.SetActive(false);
+        if (infoPanel != null) infoPanel.SetActive(false);
         if (gameOverPanel != null) gameOverPanel.SetActive(false);
         if (joinCodePanel != null) joinCodePanel.SetActive(false);
         if (errorCodeText != null) errorCodeText.gameObject.SetActive(false);
         if (introPanel != null) introPanel.SetActive(false);
+
+        if (infoPanel == null)
+        {
+            Debug.LogError("[NetworkUI] Info Panel belum di-assign.", this);
+        }
+        else
+        {
+            infoPanelAnimator = infoPanel.GetComponent<Animator>();
+            if (infoPanelAnimator == null)
+            {
+                Debug.LogError("[NetworkUI] Animator tidak ditemukan pada Info Panel.", infoPanel);
+            }
+
+            Button[] infoPanelButtons = infoPanel.GetComponentsInChildren<Button>(true);
+            foreach (Button button in infoPanelButtons)
+            {
+                if (!button.gameObject.activeSelf) continue;
+                closeInfoPanelButton = button;
+                break;
+            }
+
+            if (closeInfoPanelButton != null)
+            {
+                closeInfoPanelButton.onClick.AddListener(CloseInfoPanel);
+            }
+            else
+            {
+                Debug.LogError("[NetworkUI] Close Button tidak ditemukan di dalam Info Panel.", infoPanel);
+            }
+        }
+
+        if (infoButton != null)
+        {
+            infoButton.onClick.AddListener(OpenInfoPanel);
+        }
+        else
+        {
+            Debug.LogError("[NetworkUI] Info Button belum di-assign.", this);
+        }
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -209,11 +254,65 @@ public class NetworkUI : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (infoButton != null) infoButton.onClick.RemoveListener(OpenInfoPanel);
+        if (closeInfoPanelButton != null) closeInfoPanelButton.onClick.RemoveListener(CloseInfoPanel);
+
         if (NetworkManager.Singleton != null)
         {
             NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnected;
             NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientDisconnected;
         }
+    }
+
+    private void OpenInfoPanel()
+    {
+        if (infoPanel == null || infoPanelAnimator == null) return;
+
+        if (infoPanelAnimationRoutine != null)
+        {
+            StopCoroutine(infoPanelAnimationRoutine);
+            infoPanelAnimationRoutine = null;
+        }
+
+        if (closeInfoPanelButton != null) closeInfoPanelButton.interactable = true;
+        if (infoButton != null) infoButton.gameObject.SetActive(false);
+        infoPanel.SetActive(true);
+        infoPanelAnimator.Play("Base Layer.In", 0, 0f);
+    }
+
+    private void CloseInfoPanel()
+    {
+        if (infoPanel == null || infoPanelAnimator == null || !infoPanel.activeSelf) return;
+        if (infoPanelAnimationRoutine != null) StopCoroutine(infoPanelAnimationRoutine);
+
+        if (closeInfoPanelButton != null) closeInfoPanelButton.interactable = false;
+        infoPanelAnimationRoutine = StartCoroutine(PlayInfoPanelOutRoutine());
+    }
+
+    private System.Collections.IEnumerator PlayInfoPanelOutRoutine()
+    {
+        infoPanelAnimator.Play("Base Layer.Out", 0, 0f);
+        yield return null;
+
+        AnimatorStateInfo stateInfo = infoPanelAnimator.GetCurrentAnimatorStateInfo(0);
+        if (!stateInfo.IsName("Base Layer.Out"))
+        {
+            Debug.LogError("[NetworkUI] State animasi Out tidak dapat diputar.", infoPanel);
+            infoPanel.SetActive(false);
+            if (infoButton != null) infoButton.gameObject.SetActive(true);
+            infoPanelAnimationRoutine = null;
+            yield break;
+        }
+
+        while (stateInfo.normalizedTime < 1f)
+        {
+            yield return null;
+            stateInfo = infoPanelAnimator.GetCurrentAnimatorStateInfo(0);
+        }
+
+        infoPanel.SetActive(false);
+        if (infoButton != null) infoButton.gameObject.SetActive(true);
+        infoPanelAnimationRoutine = null;
     }
 
     // ==========================================
